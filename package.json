@@ -1,0 +1,46 @@
+{
+  "name": "mongoose-diff-history",
+  "version": "0.0.1",
+  "description": "Saves all diffs a document goes through for mongoose",
+  "main": "diffHistoryModel.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mimani/mongoose-diff-history"
+  },
+  "dependencies": {
+    "async": "*",
+    "mongoose": "~4.1.12",
+    "jsondiffpatch": "0.1.38"
+  },
+  "devDependencies": {
+  },
+  "scripts": {
+    "test": "mocha tests/diffHistoryModel.js"
+  },
+  "author": [{
+
+    "name": "Saurabh Mimani",
+    "email": "mimani.saurabh@gmail.com"},
+    {
+    "name": "Amith Prasad",
+    "email": "send2amith@gmail.com"}
+  ],
+  "engines": {
+    "node": "*"
+  },
+  "keywords": [
+    "mongoose",
+    "audit",
+    "oplog",
+    "diff",
+    "history",
+    "versioning"
+  ],
+  "bugs": {
+    "url": "https://github.com/mimani/mongoose-diff-history/issues"
+  },
+  "license": "GPL-2.0"
+}
