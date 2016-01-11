@@ -12,21 +12,24 @@
   },
   "dependencies": {
     "async": "*",
-    "mongoose": "~4.1.12",
-    "jsondiffpatch": "0.1.38"
+    "chai": "^3.4.1",
+    "jsondiffpatch": "0.1.38",
+    "mocha": "^2.3.4",
+    "mongoose": "~4.1.12"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "scripts": {
-    "test": "mocha tests/diffHistoryModel.js"
+    "test": "mocha tests --recursive"
   },
-  "author": [{
-
-    "name": "Saurabh Mimani",
-    "email": "mimani.saurabh@gmail.com"},
+  "author": [
     {
-    "name": "Amith Prasad",
-    "email": "send2amith@gmail.com"}
+      "name": "Saurabh Mimani",
+      "email": "mimani.saurabh@gmail.com"
+    },
+    {
+      "name": "Amith Prasad",
+      "email": "send2amith@gmail.com"
+    }
   ],
   "engines": {
     "node": "*"
