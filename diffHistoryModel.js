@@ -6,7 +6,11 @@ var historySchema = new mongoose.Schema(
         collectionId: {type: mongoose.Schema.Types.ObjectId},
         diff: {},
         user: {type: String},
-        reason: {type: String},
+        reason: {type: String}
+    },
+    {
+        timestamps: true
     });
+
 var History = mongoose.model('History', historySchema);
 module.exports = History;
