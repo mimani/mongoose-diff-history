@@ -12,13 +12,13 @@
   },
   "dependencies": {
     "async": "*",
-    "jsondiffpatch": "0.1.38",
-    "mongoose": "~4.1.12"
+    "jsondiffpatch": "0.1.38"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "database-cleaner": "^1.0.0",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "mongoose": "~4.1.12"
   },
   "scripts": {
     "test": "mocha tests --recursive"

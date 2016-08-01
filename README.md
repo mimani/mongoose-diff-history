@@ -1,12 +1,14 @@
 # mongoose-diff-history
 
-This Library will store all the differences one collection goes through in it's lifecycle.
+Store all the differences any collection goes through it's lifecycle.
 
-We will store diff of an object when it changes.
+## Installation
+Use `npm`: `npm install mongoose-diff-history`
 
-We will store a version along with the diff, this feature will be configurable.
+## Operation
+Each update will create a history record with jsonDiff of the change. This helps in tracking all the changes happened to an object from the beginning.
 
-Folowing will be the structure of the diff object being saved:
+Folowing will be the structure of the diff history being saved:
 
 
 diff Collection schema:
@@ -21,3 +23,19 @@ diff Collection schema:
  createdAt: When the collection is modified
  _v: version
 ```
+
+## Usage
+Use as you would any Mongoose plugin:
+
+    var mongoose = require('mongoose'),
+        diffHistory = require('mongoose-diff-history/diffHistory'),
+        schema = new mongoose.Schema({ ... });
+        schema.plugin(diffHistory.plugin);
+
+
+## Example
+I have created an example express service, demonstrating this plugin via an simple employee schema, checkout `example` folder.
+
+## TODO
+- Store a version along with the diff, this feature will be configurable.
+- instance methds to fetch an older version of object
