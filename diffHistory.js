@@ -26,6 +26,9 @@ var plugin = function lastModifiedPlugin(schema, options) {
                     next();
                 });
             }
+            else{
+                next()
+            }
         });
     });
 
