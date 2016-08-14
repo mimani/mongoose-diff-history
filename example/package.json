@@ -21,7 +21,7 @@
     "jsondiffpatch": "0.1.43",
     "lodash": "^4.0.0",
     "mongoose": "4.4.4",
-    "mongoose-diff-history": "0.0.3",
+    "mongoose-diff-history": "0.1.0",
     "morgan": "~1.6.1",
     "node-esapi": "latest",
     "nodemon": "^1.9.1",
