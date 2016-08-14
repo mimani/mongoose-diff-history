@@ -32,6 +32,8 @@ describe("diffHistory", function () {
             sample1.save(function (err, sample2) {
                 expect(err).to.null;
                 sample2.def = "laer";
+                sample2.__user = "Mimani";
+                sample2.__reason = "to test it";
                 sample2.save(function (err, sample3) {
                     expect(err).to.null;
                     done();
@@ -45,6 +47,8 @@ describe("diffHistory", function () {
                 expect(histories.length).equal(1);
                 expect(histories[0].diff.def[0]).equal('ipsum');
                 expect(histories[0].diff.def[1]).equal('laer');
+                expect(histories[0].user).equal('Mimani');
+                expect(histories[0].reason).equal('to test it');
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 done();
             });
@@ -68,7 +72,7 @@ describe("diffHistory", function () {
                 sample2 = new Sample1({def: 'lorum', ghi: 456});
                 sample2.save(function (err, sample2) {
                     expect(err).to.null;
-                    Sample1.update({}, {ghi: 1212}, {multi: true}, function (err, result) {
+                    Sample1.update({}, {ghi: 1212}, {multi: true, __user: "Mimani", __reason: "Mimani updated" }, function (err, result) {
                         expect(err).to.null;
                         done();
                     })
@@ -82,9 +86,13 @@ describe("diffHistory", function () {
                 expect(histories.length).equal(2);
                 expect(histories[0].diff.ghi[0]).equal(123);
                 expect(histories[0].diff.ghi[1]).equal(1212);
+                expect(histories[0].user).equal('Mimani');
+                expect(histories[0].reason).equal('Mimani updated');
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 expect(histories[1].diff.ghi[0]).equal(456);
                 expect(histories[1].diff.ghi[1]).equal(1212);
+                expect(histories[1].user).equal('Mimani');
+                expect(histories[1].reason).equal('Mimani updated');
                 expect(histories[1].collectionName).equal(Sample1.modelName);
                 done();
             });
@@ -105,7 +113,7 @@ describe("diffHistory", function () {
         beforeEach(function (done) {
             sample1 = new Sample1({def: 'ipsum', ghi: 123});
             sample1.save(function (err, savedSample) {
-                Sample1.findOneAndUpdate({def: 'ipsum'}, {ghi: 323, def: "hey  hye"}, function (err, updated) {
+                Sample1.findOneAndUpdate({def: 'ipsum'}, {ghi: 323, def: "hey  hye"}, {__user: "Mimani", __reason: "Mimani updated this also" }, function (err, updated) {
                     expect(err).to.null;
                     done();
                 })
@@ -120,6 +128,8 @@ describe("diffHistory", function () {
                 expect(histories[0].diff.ghi[1]).equal(323);
                 expect(histories[0].diff.def[0]).equal('ipsum');
                 expect(histories[0].diff.def[1]).equal("hey  hye");
+                expect(histories[0].reason).equal('Mimani updated this also');
+                expect(histories[0].collectionName).equal(Sample1.modelName);
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 done();
             });
