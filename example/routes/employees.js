@@ -30,9 +30,22 @@ router.post('/', function (req, res, next) {
     });
 });
 
+router.put('/update', function (req, res, next) {
+        Employee.update({}, req.body, {
+            new: true,
+            __user: "Mimani",
+            __reason: "Mimani updated"
+        }, function (errFind, updatedEmp) {
+            if (errFind) {
+                res.sendStatus(500);
+                return next(errFind);
+            }
+            return res.json(updatedEmp);
+        });
+    }
+);
 
 router.put('/:employeeId', function (req, res, next) {
-
         Employee.find({employeeId: req.params.employeeId}, function (errFind, postFind) {
             if (errFind) {
                 res.sendStatus(500);
@@ -43,6 +56,8 @@ router.put('/:employeeId', function (req, res, next) {
                 for (var key in req.body) {
                     employee[key] = req.body[key]
                 }
+                employee.__user = "Mimani";
+                employee.__reason = req.body.reason ? req.body.reason : "Mimani changed this";
                 employee.save(function (err) {
                     if (err) {
                         Logger.error("Employee update error for employeeId: " + req.params.employeeId);
@@ -59,6 +74,22 @@ router.put('/:employeeId', function (req, res, next) {
         });
     }
 );
+
+router.put('/:employeeId/findOneAndUpdate', function (req, res, next) {
+        Employee.findOneAndUpdate({employeeId: req.params.employeeId}, req.body, {
+            new: true,
+            __user: "Mimani",
+            __reason: "Mimani updated"
+        }, function (errFind, updatedEmp) {
+            if (errFind) {
+                res.sendStatus(500);
+                return next(errFind);
+            }
+            return res.json(updatedEmp);
+        });
+    }
+);
+
 
 /* DELETE /employees/:employeeId */
 router.delete('/:employeeId', function (req, res, next) {

@@ -15,7 +15,7 @@ var Employee = mongoose.model('Employee', EmployeeSchema);
 module.exports = Employee;
 
 var diffHistory = require('mongoose-diff-history/diffHistory').plugin;
-EmployeeSchema.plugin(diffHistory, {connection: mongoose.createConnection(config.mongo.path)});
+EmployeeSchema.plugin(diffHistory);
 
 
 
