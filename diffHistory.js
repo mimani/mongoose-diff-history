@@ -7,8 +7,8 @@ var plugin = function lastModifiedPlugin(schema, options) {
     schema.pre('save', function (next) {
         var self = this;
         if(self.isNew) {next();return;}
-        self.constructor.findOne({_id: self._id}, function (err, launch) {
-            saveDiffObject(self, launch, self, self.__user, self.__reason, function(){
+        self.constructor.findOne({_id: self._id}, function (err, original) {
+            saveDiffObject(self, original, self, self.__user, self.__reason, function(){
                 next();
             });
         });
