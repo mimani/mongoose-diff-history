@@ -1,6 +1,6 @@
 {
   "name": "mongoose-diff-history",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Saves all diffs a document goes through for mongoose",
   "main": "diffHistoryModel.js",
   "directories": {
