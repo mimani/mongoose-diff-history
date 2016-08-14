@@ -8,39 +8,22 @@ var plugin = function lastModifiedPlugin(schema, options) {
         var self = this;
         if(self.isNew) {next();return;}
         self.constructor.findOne({_id: self._id}, function (err, launch) {
-            var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(launch)), JSON.parse(JSON.stringify(self)));
-            if (diff) {
-                var history = new History({
-                    collectionName: self.constructor.modelName,
-                    collectionId: self._id,
-                    diff: diff,
-                    user: self.__user,
-                    reason: self.__reason,
-                });
-                history.save(function(err){
-                    if(err)
-                    {
-                        console.log("Error in saving history: ", err)
-                    }
-                    next();
-                });
-            }
-            else{
-                next()
-            }
+            saveDiffObject(self, launch, self, self.__user, self.__reason, function(){
+                next();
+            });
         });
     });
 
     schema.pre('findOneAndUpdate', function (next) {
-        saveDiffHistory(this, next);
+        saveDiffs(this, next);
     });
 
     schema.pre('update', function (next) {
-        saveDiffHistory(this, next);
+        saveDiffs(this, next);
     });
 };
 
-var saveDiffHistory = function(self, next) {
+var saveDiffs = function(self, next) {
     var queryObject = self;
     queryObject.find(queryObject._conditions, function (err, results) {
         if (err) {
@@ -52,42 +35,51 @@ var saveDiffHistory = function(self, next) {
                 err.message = "Mongo Error :" + err.message;
                 return next();
             }
-            setDiffHistory(queryObject, result, callback);
+            saveDiffHistory(queryObject, result, callback);
         }, function done() {
             return next();
         });
     });
 };
 
-var setDiffHistory = function(queryObject, currentObject, callback) {
+var saveDiffHistory = function(queryObject, currentObject, callback) {
     currentObject.constructor.findOne({_id: currentObject._id}, function (err, selfObject) {
         if(selfObject){
 
             var dbObject = {}, updateParams;
-            updateParams = queryObject._update['$set'] ? queryObject._update['$set'] : queryObject._update
+            updateParams = queryObject._update['$set'] ? queryObject._update['$set'] : queryObject._update;
             Object.keys(updateParams).forEach(function(key) {
                 dbObject[key] = selfObject[key];
             });
-            var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(dbObject)),
-                JSON.parse(JSON.stringify(updateParams)));
-            if (diff) {
-                var history = new History({
-                    collectionName: currentObject.constructor.modelName,
-                    collectionId: currentObject._id,
-                    diff: diff,
-                    user: queryObject.options.__user,
-                    reason: queryObject.options.__reason
-                });
-                history.save(function(err) {
-                    if (err){
-                        err.message = "Mongo Error :" + err.message;
-                    }
-                    callback();
-                });
-            }
+            saveDiffObject(currentObject, dbObject, updateParams, queryObject.options.__user, queryObject.options.__reason, function(){
+                callback();
+            });
         }
     });
 };
+
+var saveDiffObject = function(currentObject, original, updated, user, reason, callback){
+    var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(original)),
+        JSON.parse(JSON.stringify(updated)));
+    if (diff) {
+        var history = new History({
+            collectionName: currentObject.constructor.modelName,
+            collectionId: currentObject._id,
+            diff: diff,
+            user: user,
+            reason: reason
+        });
+        history.save(function(err) {
+            if (err){
+                err.message = "Mongo Error :" + err.message;
+            }
+            callback();
+        });
+    }
+    else{
+        callback();
+    }
+}
 
 var getHistories = function (modelName, id, exapndableFields, callback) {
     History.find({collectionName: modelName, collectionId: id}, function (err, historys) {
@@ -109,8 +101,8 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
                         //    newValue = newDate.getFullYear() + '-' + (newDate.getMonth() + 1) + '-' + newDate.getDate();
                         //}
                         //else {
-                            oldValue = history.diff[key][0];
-                            newValue = history.diff[key][1];
+                        oldValue = history.diff[key][0];
+                        newValue = history.diff[key][1];
                         //}
                         changedValues.push(key + " from " + oldValue + " to " + newValue);
                     }
