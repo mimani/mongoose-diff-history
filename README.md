@@ -1,4 +1,5 @@
-# mongoose-diff-history
+mongoose-diff-history
+=============
 
 Store all the differences any collection goes through it's lifecycle.
 
