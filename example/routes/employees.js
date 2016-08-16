@@ -30,8 +30,8 @@ router.post('/', function (req, res, next) {
     });
 });
 
-router.put('/update', function (req, res, next) {
-        Employee.update({}, req.body, {
+router.put('/update/:employeeId', function (req, res, next) {
+        Employee.update({employeeId: req.params.employeeId}, req.body, {
             new: true,
             __user: "Mimani",
             __reason: "Mimani updated"
