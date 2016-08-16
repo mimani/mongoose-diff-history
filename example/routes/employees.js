@@ -1,14 +1,8 @@
 var express = require('express');
 var router = express.Router();
-var async = require('async');
-var config = require('../config');
-var ESAPI = require('node-esapi');
 var Logger = require('../utils/logger.js');
-var VError = require('verror');
-
-var mongoose = require('mongoose');
 var Employee = require('../models/Employee.js');
-
+var diffHistory = require('mongoose-diff-history/diffHistory')
 
 /* GET /employees/1234 */
 router.get('/:employeeId', function (req, res, next) {
@@ -90,10 +84,20 @@ router.put('/:employeeId/findOneAndUpdate', function (req, res, next) {
     }
 );
 
+router.get('/:employeeId/histories', function (req, res, next) {
+    Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
+        if (err || !employeeResult || !employeeResult[0]) {
+            return next(err)
+        }
+        diffHistory.getHistories("Employee", employeeResult[0]._id, ["mobile"], function (err, histories) {
+            if (err) return next(err);
+            res.json(histories);
+        })
+    })
+});
 
 /* DELETE /employees/:employeeId */
 router.delete('/:employeeId', function (req, res, next) {
-
     Employee.remove({employeeId: req.params.employeeId}, function (err, post) {
         if (err) return next(err);
         var response = {

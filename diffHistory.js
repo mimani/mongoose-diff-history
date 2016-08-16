@@ -79,7 +79,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
     else{
         callback();
     }
-}
+};
 
 var getHistories = function (modelName, id, exapndableFields, callback) {
     History.find({collectionName: modelName, collectionId: id}, function (err, historys) {
