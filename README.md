@@ -3,7 +3,7 @@
 mongoose-diff-history
 =============
 
-Store all the differences any collection goes through it's lifecycle.
+Stores and Manages all the differences any Mongo collection goes through it's lifecycle.
 
 ## Installation
 ---------------
