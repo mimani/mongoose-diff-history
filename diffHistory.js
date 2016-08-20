@@ -105,7 +105,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
 };
 
 var getVersion = function (modelName, id, version, callback) {
-    History.find({collectionName: modelName, collectionId: id, version: {$lte : version}}, function (err, histories) {
+    History.find({collectionName: modelName, collectionId: id, version: {$lte : parseInt(version)}}, function (err, histories) {
         if (err) {
             console.error(err);
             return callback(err, null);

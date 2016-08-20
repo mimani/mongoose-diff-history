@@ -84,6 +84,18 @@ router.put('/findOneAndUpdate/:employeeId', function (req, res, next) {
     }
 );
 
+router.get('/:employeeId/version/:version', function (req, res, next) {
+    Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
+        if (err || !employeeResult || !employeeResult[0]) {
+            return next(err)
+        }
+        diffHistory.getVersion("Employee", employeeResult[0]._id, req.params.version, function (err, oldEmployee) {
+            if (err) return next(err);
+            res.json(oldEmployee);
+        })
+    })
+});
+
 router.get('/:employeeId/histories', function (req, res, next) {
     Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
         if (err || !employeeResult || !employeeResult[0]) {
