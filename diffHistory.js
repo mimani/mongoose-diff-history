@@ -6,12 +6,28 @@ var plugin = function lastModifiedPlugin(schema, options) {
 
     schema.pre("save", function (next) {
         var self = this;
-        if(self.isNew) {next();return;}
-        self.constructor.findOne({_id: self._id}, function (err, original) {
-            saveDiffObject(self, original, self, self.__user, self.__reason, function(){
+        if(self.isNew) {
+            var history = new History({
+                collectionName: self.constructor.modelName,
+                collectionId: self._id,
+                diff: self,
+                user: self.__user,
+                reason: self.__reason,
+                version: 0
+            });
+            history.save(function(err) {
+                if (err){
+                    err.message = "Mongo Error :" + err.message;
+                }
                 next();
             });
-        });
+        }else{
+            self.constructor.findOne({_id: self._id}, function (err, original) {
+                saveDiffObject(self, original, self, self.__user, self.__reason, function(){
+                    next();
+                });
+            });
+        }
     });
 
     schema.pre("findOneAndUpdate", function (next) {
@@ -62,18 +78,25 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
     var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(original)),
         JSON.parse(JSON.stringify(updated)));
     if (diff) {
-        var history = new History({
-            collectionName: currentObject.constructor.modelName,
-            collectionId: currentObject._id,
-            diff: diff,
-            user: user,
-            reason: reason
-        });
-        history.save(function(err) {
-            if (err){
+        History.findOne().sort('-version').exec(function (err, lastHistory) {
+            if (err) {
                 err.message = "Mongo Error :" + err.message;
+                return callback();
             }
-            callback();
+            var history = new History({
+                collectionName: currentObject.constructor.modelName,
+                collectionId: currentObject._id,
+                diff: diff,
+                user: user,
+                reason: reason,
+                version: lastHistory.version + 1
+            });
+            history.save(function (err) {
+                if (err) {
+                    err.message = "Mongo Error :" + err.message;
+                }
+                callback();
+            });
         });
     }
     else{
@@ -81,13 +104,38 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
     }
 };
 
-var getHistories = function (modelName, id, exapndableFields, callback) {
-    History.find({collectionName: modelName, collectionId: id}, function (err, historys) {
+var getVersion = function (modelName, id, version, callback) {
+    History.find({collectionName: modelName, collectionId: id, version: {$lte : version}}, function (err, histories) {
         if (err) {
             console.error(err);
             return callback(err, null);
         }
-        async.map(historys, function (history, mapCallback) {
+        var object;
+        async.each(histories, function(history, eachCallback){
+            if(history.version === 0){
+                object = history.diff;
+            }
+            else{
+                jsondiffpatch.patch(object, history.diff);
+            }
+            eachCallback();
+        }, function(err){
+            if (err) {
+                console.error(err);
+                return callback(err, null);
+            }
+            callback(null, object)
+        })
+    });
+};
+
+var getHistories = function (modelName, id, exapndableFields, callback) {
+    History.find({collectionName: modelName, collectionId: id, version:  { $gt: 0}}, function (err, histories) {
+        if (err) {
+            console.error(err);
+            return callback(err, null);
+        }
+        async.map(histories, function (history, mapCallback) {
             var changedValues = [];
             var changedFields = [];
             for (var key in history.diff) {
@@ -130,3 +178,4 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
 
 module.exports.plugin = plugin;
 module.exports.getHistories = getHistories;
+module.exports.getVersion = getVersion;
