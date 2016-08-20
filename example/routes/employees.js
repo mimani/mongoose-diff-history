@@ -69,7 +69,7 @@ router.put('/:employeeId', function (req, res, next) {
     }
 );
 
-router.put('/:employeeId/findOneAndUpdate', function (req, res, next) {
+router.put('/findOneAndUpdate/:employeeId', function (req, res, next) {
         Employee.findOneAndUpdate({employeeId: req.params.employeeId}, req.body, {
             new: true,
             __user: "Mimani",

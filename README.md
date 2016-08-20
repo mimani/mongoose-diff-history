@@ -42,6 +42,16 @@ Use as you would any Mongoose plugin:
 ```
 
 
+## Helper Methods
+---------------
+You can get all the histories created for an object using following method:
+
+``` js
+  diffHistory.getHistories(modelName, ObjectId, <expandable fields>, function (err, histories) {
+
+  }
+```
+
 ## Example
 ---------------
 I have created an example express service, demonstrating this plugin via an simple employee schema, checkout `example` folder.
