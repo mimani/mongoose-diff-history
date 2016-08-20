@@ -20,14 +20,14 @@ Following will be the structure of the diff history being saved:
 diff Collection schema:
 
 ```
- _id : mongo id of the diff object
- collectionName: Name of the collection for which diff is saved
- collectionId : Mongo Id of the collection being modified
- diff: diff object
- user: User who modified
- reason: Why the collection is modified
- createdAt: When the collection is modified
- _v: version
+_id : mongo id of the diff object
+collectionName: Name of the collection for which diff is saved
+collectionId : Mongo Id of the collection being modified
+diff: diff object
+user: User who modified
+reason: Why the collection is modified
+createdAt: When the collection is modified
+_v: version
 ```
 
 ## Usage
@@ -35,10 +35,10 @@ diff Collection schema:
 Use as you would any Mongoose plugin:
 
 ``` js
-    var mongoose = require('mongoose'),
-        diffHistory = require('mongoose-diff-history/diffHistory'),
-        schema = new mongoose.Schema({ ... });
-        schema.plugin(diffHistory.plugin);
+var mongoose = require('mongoose'),
+    diffHistory = require('mongoose-diff-history/diffHistory'),
+    schema = new mongoose.Schema({ ... });
+    schema.plugin(diffHistory.plugin);
 ```
 
 
@@ -47,9 +47,9 @@ Use as you would any Mongoose plugin:
 You can get all the histories created for an object using following method:
 
 ``` js
-  diffHistory.getHistories(modelName, ObjectId, <expandable fields>, function (err, histories) {
+diffHistory.getHistories(modelName, ObjectId, <expandable fields>, function (err, histories) {
 
-  }
+}
 ```
 
 ## Example
