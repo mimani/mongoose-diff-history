@@ -54,7 +54,7 @@ You can get all the histories created for an object using following method:
 
 ## Example
 ---------------
-I have created an example express service, demonstrating this plugin via an simple employee schema, checkout `example` folder.
+I have created an [example](https://github.com/mimani/mongoose-diff-history/tree/master/example) express service, demonstrating this plugin via an simple employee schema, checkout `example` directory in this repo.
 
 ## TODO
 ---------------
