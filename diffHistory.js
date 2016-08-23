@@ -15,12 +15,7 @@ var plugin = function lastModifiedPlugin(schema, options) {
                 reason: self.__reason,
                 version: 0
             });
-            history.save(function(err) {
-                if (err){
-                    err.message = "Mongo Error :" + err.message;
-                }
-                next();
-            });
+            saveHistoryObject(history, next);
         }else{
             self.constructor.findOne({_id: self._id}, function (err, original) {
                 saveDiffObject(self, original, self, self.__user, self.__reason, function(){
@@ -91,12 +86,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
                 reason: reason,
                 version: lastHistory.version + 1
             });
-            history.save(function (err) {
-                if (err) {
-                    err.message = "Mongo Error :" + err.message;
-                }
-                callback();
-            });
+            saveHistoryObject(history, callback)
         });
     }
     else{
@@ -104,8 +94,17 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
     }
 };
 
+var saveHistoryObject = function (history, callback){
+    history.save(function (err) {
+        if (err) {
+            err.message = "Mongo Error :" + err.message;
+        }
+        callback();
+    });
+};
+
 var getVersion = function (modelName, id, version, callback) {
-    History.find({collectionName: modelName, collectionId: id, version: {$lte : parseInt(version)}}, function (err, histories) {
+    History.find({collectionName: modelName, collectionId: id, version: {$lte : parseInt(version, 10)}}, function (err, histories) {
         if (err) {
             console.error(err);
             return callback(err, null);
