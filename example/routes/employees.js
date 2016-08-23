@@ -1,11 +1,11 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-var Logger = require('../utils/logger.js');
-var Employee = require('../models/Employee.js');
-var diffHistory = require('mongoose-diff-history/diffHistory')
+var Logger = require("../utils/logger.js");
+var Employee = require("../models/Employee.js");
+var diffHistory = require("mongoose-diff-history/diffHistory")
 
 /* GET /employees/1234 */
-router.get('/:employeeId', function (req, res, next) {
+router.get("/:employeeId", function (req, res, next) {
     console.log("req.params.employeeId ", req.params.employeeId);
     Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
         if (err) {
@@ -17,14 +17,14 @@ router.get('/:employeeId', function (req, res, next) {
 
 
 /* POST /employees */
-router.post('/', function (req, res, next) {
+router.post("/", function (req, res, next) {
     Employee.create(req.body, function (err, createOutput) {
         if (err) return next(err);
         res.json(createOutput);
     });
 });
 
-router.put('/update/:employeeId', function (req, res, next) {
+router.put("/update/:employeeId", function (req, res, next) {
         Employee.update({employeeId: req.params.employeeId}, req.body, {
             new: true,
             __user: "Mimani",
@@ -39,7 +39,7 @@ router.put('/update/:employeeId', function (req, res, next) {
     }
 );
 
-router.put('/:employeeId', function (req, res, next) {
+router.put("/:employeeId", function (req, res, next) {
         Employee.find({employeeId: req.params.employeeId}, function (errFind, postFind) {
             if (errFind) {
                 res.sendStatus(500);
@@ -69,7 +69,7 @@ router.put('/:employeeId', function (req, res, next) {
     }
 );
 
-router.put('/findOneAndUpdate/:employeeId', function (req, res, next) {
+router.put("/findOneAndUpdate/:employeeId", function (req, res, next) {
         Employee.findOneAndUpdate({employeeId: req.params.employeeId}, req.body, {
             new: true,
             __user: "Mimani",
@@ -84,7 +84,19 @@ router.put('/findOneAndUpdate/:employeeId', function (req, res, next) {
     }
 );
 
-router.get('/:employeeId/histories', function (req, res, next) {
+router.get("/:employeeId/version/:version", function (req, res, next) {
+    Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
+        if (err || !employeeResult || !employeeResult[0]) {
+            return next(err)
+        }
+        diffHistory.getVersion("Employee", employeeResult[0]._id, req.params.version, function (err, oldEmployee) {
+            if (err) return next(err);
+            res.json(oldEmployee);
+        })
+    })
+});
+
+router.get("/:employeeId/histories", function (req, res, next) {
     Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
         if (err || !employeeResult || !employeeResult[0]) {
             return next(err)
@@ -97,12 +109,12 @@ router.get('/:employeeId/histories', function (req, res, next) {
 });
 
 /* DELETE /employees/:employeeId */
-router.delete('/:employeeId', function (req, res, next) {
+router.delete("/:employeeId", function (req, res, next) {
     Employee.remove({employeeId: req.params.employeeId}, function (err, post) {
         if (err) return next(err);
         var response = {
-            'employee_id': req.params.employeeId,
-            'entry_deleted': post.result.n
+            "employee_id": req.params.employeeId,
+            "entry_deleted": post.result.n
         };
         res.json(response);
     });

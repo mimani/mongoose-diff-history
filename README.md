@@ -1,11 +1,12 @@
 [![Build Status](https://travis-ci.org/mimani/mongoose-diff-history.svg?branch=master)](https://travis-ci.org/mimani/mongoose-diff-history)
 [![Codacy](https://api.codacy.com/project/badge/grade/bf1936538af048ac8d104a6c2ecd71ca)](https://www.codacy.com/app/mimani-saurabh/mongoose-diff-history)
 [![Codacy](https://api.codacy.com/project/badge/coverage/bf1936538af048ac8d104a6c2ecd71ca)](https://www.codacy.com/app/mimani-saurabh/mongoose-diff-history)
+[![Code Climate](https://codeclimate.com/github/mimani/mongoose-diff-history/badges/gpa.svg)](https://codeclimate.com/github/mimani/mongoose-diff-history)
 
 mongoose-diff-history
 =============
 
-Stores and Manages all the differences any Mongo collection goes through it's lifecycle.
+Stores and Manages all the differences and versions, any Mongo collection goes through it's lifecycle.
 
 ## Installation
 ---------------
@@ -51,16 +52,22 @@ var mongoose = require('mongoose'),
 You can get all the histories created for an object using following method:
 
 ``` js
+var diffHistory = require('mongoose-diff-history/diffHistory');
 diffHistory.getHistories(modelName, ObjectId, <expandable fields>, function (err, histories) {
 
 }
 ```
 
+You can get an older version of the object using following method:
+``` js
+var diffHistory = require('mongoose-diff-history/diffHistory');
+diffHistory.getVersion(modelName, ObjectId, version, function (err, oldObject) {
+
+}
+```
+
+
+
 ## Example
 ---------------
 I have created an [example](https://github.com/mimani/mongoose-diff-history/tree/master/example) express service, demonstrating this plugin via an simple employee schema, checkout `example` directory in this repo.
-
-## TODO
----------------
-- Store a version along with the diff, this feature will be configurable.
-- instance methods to fetch an older version of object

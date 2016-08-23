@@ -1,6 +1,7 @@
 This is sample express REST application which demonstrates how `mongoose-diff-history` is used.
 
 
+## Installation
 Install all npm dependencies required
 ```
 npm install
