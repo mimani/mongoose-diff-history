@@ -21,7 +21,7 @@
     "mongoose": "~4.1.12"
   },
   "scripts": {
-    "test": "istanbul cover --report lcov  _mocha tests --recursive && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage"
+    "test": "istanbul cover --report lcov  _mocha tests --recursive"
   },
   "author": [
     {
