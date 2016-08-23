@@ -1,6 +1,7 @@
 var expect = require("chai").expect;
 var mongoose = require("mongoose");
 mongoose.connect("mongodb://localhost:27017/tekpub_test");
+var jsondiffpatch = require("../node_modules/jsondiffpatch/src/main").create();
 var diffHistory = require("../diffHistory");
 var History = require("../diffHistoryModel");
 
@@ -223,6 +224,73 @@ describe("diffHistory", function () {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(1);
                 expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
+                done();
+            })
+        });
+    });
+
+    describe("plugin: post remove", function () {
+        var sample1, sample2;
+        beforeEach(function (done) {
+            sample1 = new Sample1({def: "ipsum", ghi: 123});
+            sample1.save(function (err, savedSample) {
+                Sample1.findOneAndUpdate({def: "ipsum"}, {ghi: 323, def: "hey  hye"}, {__user: "Mimani", __reason: "Mimani updated this also", new: true }, function (err, updated) {
+                    expect(err).to.null;
+                    sample2 =  updated;
+                    updated.__user = "Peter";
+                    updated.__reason = "As this was requested";
+                    updated.remove(function(err, removed){
+                        expect(err).to.null;
+                        done();
+                    });
+                })
+            })
+        });
+
+        it("should create a diff object when collections are updated via update", function (done) {
+            History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(3);
+                expect(histories[1].diff.ghi[0]).equal(123);
+                expect(histories[1].diff.ghi[1]).equal(323);
+                expect(histories[1].diff.def[0]).equal("ipsum");
+                expect(histories[1].diff.def[1]).equal("hey  hye");
+                expect(histories[1].reason).equal("Mimani updated this also");
+                expect(histories[1].collectionName).equal(Sample1.modelName);
+                expect(histories[1].collectionName).equal(Sample1.modelName);
+                expect(histories[2].diff).deep.equal(jsondiffpatch.diff(JSON.parse(JSON.stringify(sample2)), {}));
+                expect(histories[2].reason).equal("As this was requested");
+                expect(histories[2].user).equal("Peter");
+                expect(histories[2].collectionName).equal(Sample1.modelName);
+                expect(histories[2].collectionName).equal(Sample1.modelName);
+                done();
+            });
+        });
+
+        it("should return histories", function (done) {
+            diffHistory.getHistories(Sample1.modelName, sample1._id, ["ghi"], function (err, historyAudits) {
+                expect(err).to.null;
+                expect(historyAudits.length).equal(2);
+                expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
+                expect(historyAudits[1].commment).equal("modified abc, __v, def, _id, ghi from 323 to 0");
+                done();
+            })
+        });
+
+        it("should get version after object is removed", function (done) {
+            diffHistory.getVersion(Sample1.modelName, sample1._id, 1, function (err, oldObject) {
+                expect(err).to.null;
+                var sample3 = sample2.toObject()
+                delete sample3["__v"];
+                expect(sample3).deep.equal(oldObject);
+                done();
+            })
+        });
+
+        it("should get latest version after object is removed", function (done) {
+            diffHistory.getVersion(Sample1.modelName, sample1._id, 2, function (err, oldObject) {
+                expect(err).to.null;
+                expect({}).deep.equal(oldObject);
                 done();
             })
         });
