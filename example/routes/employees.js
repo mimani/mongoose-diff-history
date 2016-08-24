@@ -96,6 +96,13 @@ router.get("/:employeeId/version/:version", function (req, res, next) {
     })
 });
 
+router.get("/:id/versionbyObjectId/:version", function (req, res, next) {
+    diffHistory.getVersion("Employee", req.params.id, req.params.version, function (err, oldEmployee) {
+        if (err) return next(err);
+        res.json(oldEmployee);
+    })
+});
+
 router.get("/:employeeId/histories", function (req, res, next) {
     Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
         if (err || !employeeResult || !employeeResult[0]) {
