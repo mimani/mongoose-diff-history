@@ -280,7 +280,7 @@ describe("diffHistory", function () {
         it("should get version after object is removed", function (done) {
             diffHistory.getVersion(Sample1.modelName, sample1._id, 1, function (err, oldObject) {
                 expect(err).to.null;
-                var sample3 = sample2.toObject()
+                var sample3 = sample2.toObject();
                 delete sample3["__v"];
                 expect(sample3).deep.equal(oldObject);
                 done();

@@ -11,7 +11,7 @@ router.get("/:employeeId", function (req, res, next) {
         if (err) {
             return next(err)
         }
-        res.json(employeeResult[0]);
+        res.json(employeeResult[0] ? employeeResult[0] : {});
     });
 });
 
@@ -110,13 +110,16 @@ router.get("/:employeeId/histories", function (req, res, next) {
 
 /* DELETE /employees/:employeeId */
 router.delete("/:employeeId", function (req, res, next) {
-    Employee.remove({employeeId: req.params.employeeId}, function (err, post) {
-        if (err) return next(err);
-        var response = {
-            "employee_id": req.params.employeeId,
-            "entry_deleted": post.result.n
-        };
-        res.json(response);
+    Employee.findOne({employeeId: req.params.employeeId}, function (err, employee) {
+        if (err || !employee) return next(err);
+        employee.remove(function(err){
+            if (err) return next(err);
+            var response = {
+                "employeeId": req.params.employeeId,
+                "entryDeleted": true
+            };
+            res.json(response);
+        })
     });
 });
 
