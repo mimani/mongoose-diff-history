@@ -2,38 +2,6 @@ var History = require("./diffHistoryModel");
 var async = require("async");
 var jsondiffpatch = require("./node_modules/jsondiffpatch/src/main").create();
 
-var plugin = function lastModifiedPlugin(schema, options) {
-
-    schema.pre("save", function (next) {
-        var self = this;
-        if(self.isNew) {
-            var history = new History({
-                collectionName: self.constructor.modelName,
-                collectionId: self._id,
-                diff: self,
-                user: self.__user,
-                reason: self.__reason,
-                version: 0
-            });
-            saveHistoryObject(history, next);
-        }else{
-            self.constructor.findOne({_id: self._id}, function (err, original) {
-                saveDiffObject(self, original, self, self.__user, self.__reason, function(){
-                    next();
-                });
-            });
-        }
-    });
-
-    schema.pre("findOneAndUpdate", function (next) {
-        saveDiffs(this, next);
-    });
-
-    schema.pre("update", function (next) {
-        saveDiffs(this, next);
-    });
-};
-
 var saveDiffs = function(self, next) {
     var queryObject = self;
     queryObject.find(queryObject._conditions, function (err, results) {
@@ -73,7 +41,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
     var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(original)),
         JSON.parse(JSON.stringify(updated)));
     if (diff) {
-        History.findOne().sort('-version').exec(function (err, lastHistory) {
+        History.findOne().sort("-version").exec(function (err, lastHistory) {
             if (err) {
                 err.message = "Mongo Error :" + err.message;
                 return callback();
@@ -86,7 +54,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
                 reason: reason,
                 version: lastHistory.version + 1
             });
-            saveHistoryObject(history, callback)
+            saveHistoryObject(history, callback);
         });
     }
     else{
@@ -123,7 +91,7 @@ var getVersion = function (modelName, id, version, callback) {
                 console.error(err);
                 return callback(err, null);
             }
-            callback(null, object)
+            callback(null, object);
         })
     });
 };
@@ -172,6 +140,44 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
             }
             return callback(null, output);
         });
+    });
+};
+
+var plugin = function lastModifiedPlugin(schema, options) {
+
+    schema.pre("save", function (next) {
+        var self = this;
+        if(self.isNew) {
+            var history = new History({
+                collectionName: self.constructor.modelName,
+                collectionId: self._id,
+                diff: self,
+                user: self.__user,
+                reason: self.__reason,
+                version: 0
+            });
+            saveHistoryObject(history, next);
+        }else{
+            self.constructor.findOne({_id: self._id}, function (err, original) {
+                saveDiffObject(self, original, self, self.__user, self.__reason, function(){
+                    next();
+                });
+            });
+        }
+    });
+
+    schema.pre("findOneAndUpdate", function (next) {
+        saveDiffs(this, next);
+    });
+
+    schema.pre("update", function (next) {
+        saveDiffs(this, next);
+    });
+
+    schema.pre("remove", function(next) {
+        saveDiffObject(this, this, {}, this.__user, this.__reason, function(){
+            next();
+        })
     });
 };
 
