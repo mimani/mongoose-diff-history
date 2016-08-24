@@ -272,7 +272,7 @@ describe("diffHistory", function () {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
-                expect(historyAudits[1].commment).equal("modified abc, __v, def, _id, ghi from 323 to 0");
+                expect(historyAudits[1].commment).equal("modified abc, def, _id, __v, ghi from 323 to 0");
                 done();
             })
         });
