@@ -54,7 +54,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
                 reason: reason,
                 version: lastHistory.version + 1
             });
-            saveHistoryObject(history, callback)
+            saveHistoryObject(history, callback);
         });
     }
     else{

@@ -1,18 +1,18 @@
-var winston = require('winston');
+var winston = require("winston");
 winston.emitErrs = true;
-var path = require('path');
+var path = require("path");
 var filename = "";
-if(process.env.NODE_ENV == 'localhost'){
-    filename = path.join(__dirname, '..', '/log/example.log');
-}else if(process.env.NODE_ENV == 'test'){
-    filename = path.join(__dirname, '..', '/log-test/example.log');
+if(process.env.NODE_ENV == "localhost"){
+    filename = path.join(__dirname, "..", "/log/example.log");
+}else if(process.env.NODE_ENV == "test"){
+    filename = path.join(__dirname, "..", "/log-test/example.log");
 }else{
-    filename = '/var/log/example/example.log';
+    filename = "/var/log/example/example.log";
 }
 var logger = new winston.Logger({
     transports: [
         new (winston.transports.File)({
-            level: 'info',
+            level: "info",
             filename: filename,
             json: true,
             maxsize: 5242880, //5MB
@@ -20,7 +20,7 @@ var logger = new winston.Logger({
             colorize: true
         }),
         new (winston.transports.Console)({
-            level: 'debug',
+            level: "debug",
             json: false,
             colorize: true,
             prettyPrint: true

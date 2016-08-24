@@ -149,7 +149,7 @@ describe("diffHistory", function () {
     });
 
     describe("plugin: pre update", function () {
-        var sample1;
+        var sample1, sample2;
         beforeEach(function (done) {
             sample1 = new Sample1({def: "ipsum", ghi: 123});
             sample1.save(function (err, sample1) {

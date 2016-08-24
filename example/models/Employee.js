@@ -1,5 +1,5 @@
-var mongoose = require('mongoose');
-var config = require('../config');
+var mongoose = require("mongoose");
+var config = require("../config");
 
 var EmployeeSchema = new mongoose.Schema({
     name: {type: String},
@@ -10,10 +10,10 @@ var EmployeeSchema = new mongoose.Schema({
     employeeId: {type: String},
 });
 
-var diffHistory = require('mongoose-diff-history/diffHistory').plugin;
+var diffHistory = require("mongoose-diff-history/diffHistory").plugin;
 EmployeeSchema.plugin(diffHistory);
 
-var Employee = mongoose.model('Employee', EmployeeSchema);
+var Employee = mongoose.model("Employee", EmployeeSchema);
 module.exports = Employee;
 
 

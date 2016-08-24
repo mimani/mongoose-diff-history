@@ -19,7 +19,7 @@ router.get("/:employeeId", function (req, res, next) {
 /* POST /employees */
 router.post("/", function (req, res, next) {
     Employee.create(req.body, function (err, createOutput) {
-        if (err) return next(err);
+        if (err){ return next(err);}
         res.json(createOutput);
     });
 });
@@ -48,7 +48,7 @@ router.put("/:employeeId", function (req, res, next) {
             if (postFind && Array.isArray(postFind) && postFind.length > 0) {
                 var employee = postFind[0];
                 for (var key in req.body) {
-                    employee[key] = req.body[key]
+                    employee[key] = req.body[key];
                 }
                 employee.__user = "Mimani";
                 employee.__reason = req.body.reason ? req.body.reason : "Mimani changed this";
@@ -90,7 +90,7 @@ router.get("/:employeeId/version/:version", function (req, res, next) {
             return next(err)
         }
         diffHistory.getVersion("Employee", employeeResult[0]._id, req.params.version, function (err, oldEmployee) {
-            if (err) return next(err);
+            if (err){ return next(err);}
             res.json(oldEmployee);
         })
     })
@@ -98,7 +98,7 @@ router.get("/:employeeId/version/:version", function (req, res, next) {
 
 router.get("/:id/versionbyObjectId/:version", function (req, res, next) {
     diffHistory.getVersion("Employee", req.params.id, req.params.version, function (err, oldEmployee) {
-        if (err) return next(err);
+        if (err){ return next(err);}
         res.json(oldEmployee);
     })
 });
@@ -118,9 +118,9 @@ router.get("/:employeeId/histories", function (req, res, next) {
 /* DELETE /employees/:employeeId */
 router.delete("/:employeeId", function (req, res, next) {
     Employee.findOne({employeeId: req.params.employeeId}, function (err, employee) {
-        if (err || !employee) return next(err);
+        if (err || !employee){ return next(err);}
         employee.remove(function(err){
-            if (err) return next(err);
+            if (err){ return next(err);}
             var response = {
                 "employeeId": req.params.employeeId,
                 "entryDeleted": true
