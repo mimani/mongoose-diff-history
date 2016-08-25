@@ -61,7 +61,7 @@ diffHistory.getHistories(modelName, ObjectId, <expandable fields>, function (err
 You can get an older version of the object using following method:
 ``` js
 var diffHistory = require('mongoose-diff-history/diffHistory');
-diffHistory.getVersion(modelName, ObjectId, version, function (err, oldObject) {
+diffHistory.getVersion(mongooseModel, ObjectId, version, function (err, oldObject) {
 
 }
 ```
