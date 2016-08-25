@@ -1,10 +1,10 @@
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
 var historySchema = new mongoose.Schema(
     {
         collectionName: {type: String},
         collectionId: {type: mongoose.Schema.Types.ObjectId},
         diff: {},
-        user: {type: String},
+        user: {},
         reason: {type: String},
         version: {type: Number, min: 0}
     },
@@ -12,5 +12,5 @@ var historySchema = new mongoose.Schema(
         timestamps: true
     });
 
-var History = mongoose.model('History', historySchema);
+var History = mongoose.model("History", historySchema);
 module.exports = History;

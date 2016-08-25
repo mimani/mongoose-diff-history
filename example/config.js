@@ -21,7 +21,7 @@ var config = {
     }
 };
 if(process.env.NODE_ENV === "production"){
-    module.exports = config.remoteConfig
+    module.exports = config.remoteConfig;
 }
 else if(process.env.NODE_ENV === "localhost")
 {
@@ -34,7 +34,7 @@ else if(process.env.NODE_ENV === "staging")
 else if(process.env.NODE_ENV === "test"){
     module.exports = config.testConfig;
 }else {
-    console.log("Proper node enviornment not set");
+    console.error("Proper node enviornment not set");
 }
 
 module.exports.secret = "C40A99EQJLPS2I5HM3SJ";

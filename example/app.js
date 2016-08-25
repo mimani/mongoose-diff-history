@@ -26,7 +26,7 @@ var app = express();
 // Access Logs
 logger.token("id", function getId(req) {
   var idValue = "-";
-  if (req.user !== undefined && req.user.email !== undefined) {
+  if (req.user && req.user.email) {
     idValue = req.user.email;
   } 
   return idValue;

@@ -39,7 +39,7 @@ describe("diffHistory", function () {
                 sample2.save(function (err, sample3) {
                     expect(err).to.null;
                     sampleV2 = sample3.toObject();
-                    sample3.ghi = 10
+                    sample3.ghi = 10;
                     sample3.save(function (err, sample4) {
                         expect(err).to.null;
                         sampleV3 = sample4.toObject();
@@ -50,7 +50,7 @@ describe("diffHistory", function () {
                             done();
                         });
                     });
-                })
+                });
             });
         });
 
@@ -227,7 +227,7 @@ describe("diffHistory", function () {
                 Sample1.findOneAndUpdate({def: "ipsum"}, {ghi: 323, def: "hey  hye"}, {__user: "Mimani", __reason: "Mimani updated this also", new: true }, function (err, updated) {
                     expect(err).to.null;
                     sample2 =  JSON.parse(JSON.stringify(updated));
-                    updated.__user = "Peter";
+                    updated.__user = {name: "Peter", role: "developer"};
                     updated.__reason = "As this was requested";
                     updated.remove(function(err, removed){
                         expect(err).to.null;
@@ -250,7 +250,7 @@ describe("diffHistory", function () {
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 expect(histories[1].diff).deep.equal(jsondiffpatch.diff(sample2, {}));
                 expect(histories[1].reason).equal("As this was requested");
-                expect(histories[1].user).equal("Peter");
+                expect(histories[1].user).deep.equal({name: "Peter", role: "developer"});
                 expect(histories[1].collectionName).equal(Sample1.modelName);
                 expect(histories[1].collectionName).equal(Sample1.modelName);
                 done();
@@ -262,7 +262,9 @@ describe("diffHistory", function () {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
-                //expect(historyAudits[1].commment).equal("modified abc, def, _id, __v, ghi from 323 to 0");
+                expect(historyAudits[1].commment).to.contain("ghi from 323 to 0");
+                expect(historyAudits[1].commment).to.contain("abc");
+                expect(historyAudits[1].commment).to.contain("def");
                 done();
             })
         });
