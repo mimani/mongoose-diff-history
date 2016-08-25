@@ -272,7 +272,7 @@ describe("diffHistory", function () {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
-                expect(historyAudits[1].commment).equal("modified abc, def, _id, __v, ghi from 323 to 0");
+                expect(historyAudits[1].commment).to.contain("from 323 to 0");
                 done();
             })
         });
@@ -294,6 +294,36 @@ describe("diffHistory", function () {
                 done();
             })
         });
+    });
+
+    describe("plugin: insert many", function () {
+
+        var manySamples = [
+            {def: "many 1", ghi: 1},
+            {def: "many 2", ghi: 2},
+            {def: "many 3", ghi: 3},
+            {def: "many 4", ghi: 4},
+            {def: "many 5", ghi: 5},
+            {def: "many 6", ghi: 6},
+            {def: "many 7", ghi: 7},
+            {def: "many 8", ghi: 8}
+        ];
+
+        beforeEach(function (done) {
+            Sample1.collection.insertMany(manySamples, function(err){
+                expect(err).to.null;
+                done();
+            });
+        });
+
+        it("should not have created history records because of the bulk insertion", function (done) {
+            History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(0);
+                done();
+            });
+        });
+
     });
 
 });
