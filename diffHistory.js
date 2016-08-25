@@ -2,6 +2,55 @@ var History = require("./diffHistoryModel");
 var async = require("async");
 var jsondiffpatch = require("./node_modules/jsondiffpatch/src/main").create();
 
+var saveHistoryObject = function (history, callback){
+    history.save(function (err) {
+        if (err) {
+            err.message = "Mongo Error :" + err.message;
+        }
+        callback();
+    });
+};
+
+var saveDiffObject = function(currentObject, original, updated, user, reason, callback){
+    var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(original)),
+        JSON.parse(JSON.stringify(updated)));
+    if (diff) {
+        History.findOne().sort("-version").exec(function (err, lastHistory) {
+            if (err) {
+                err.message = "Mongo Error :" + err.message;
+                return callback();
+            }
+            var history = new History({
+                collectionName: currentObject.constructor.modelName,
+                collectionId: currentObject._id,
+                diff: diff,
+                user: user,
+                reason: reason,
+                version: lastHistory ? lastHistory.version + 1 : 0
+            });
+            saveHistoryObject(history, callback);
+        });
+    }
+    else{
+        callback();
+    }
+};
+
+var saveDiffHistory = function(queryObject, currentObject, callback) {
+    currentObject.constructor.findOne({_id: currentObject._id}, function (err, selfObject) {
+        if(selfObject){
+            var dbObject = {}, updateParams;
+            updateParams = queryObject._update["$set"] ? queryObject._update["$set"] : queryObject._update;
+            Object.keys(updateParams).forEach(function(key) {
+                dbObject[key] = selfObject[key];
+            });
+            saveDiffObject(currentObject, dbObject, updateParams, queryObject.options.__user, queryObject.options.__reason, function(){
+                callback();
+            });
+        }
+    });
+};
+
 var saveDiffs = function(self, next) {
     var queryObject = self;
     queryObject.find(queryObject._conditions, function (err, results) {
@@ -21,83 +70,36 @@ var saveDiffs = function(self, next) {
     });
 };
 
-var saveDiffHistory = function(queryObject, currentObject, callback) {
-    currentObject.constructor.findOne({_id: currentObject._id}, function (err, selfObject) {
-        if(selfObject){
-
-            var dbObject = {}, updateParams;
-            updateParams = queryObject._update["$set"] ? queryObject._update["$set"] : queryObject._update;
-            Object.keys(updateParams).forEach(function(key) {
-                dbObject[key] = selfObject[key];
-            });
-            saveDiffObject(currentObject, dbObject, updateParams, queryObject.options.__user, queryObject.options.__reason, function(){
-                callback();
-            });
-        }
-    });
-};
-
-var saveDiffObject = function(currentObject, original, updated, user, reason, callback){
-    var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(original)),
-        JSON.parse(JSON.stringify(updated)));
-    if (diff) {
-        History.findOne().sort("-version").exec(function (err, lastHistory) {
-            if (err) {
-                err.message = "Mongo Error :" + err.message;
-                return callback();
-            }
-            var history = new History({
-                collectionName: currentObject.constructor.modelName,
-                collectionId: currentObject._id,
-                diff: diff,
-                user: user,
-                reason: reason,
-                version: lastHistory.version + 1
-            });
-            saveHistoryObject(history, callback);
-        });
-    }
-    else{
-        callback();
-    }
-};
-
-var saveHistoryObject = function (history, callback){
-    history.save(function (err) {
-        if (err) {
-            err.message = "Mongo Error :" + err.message;
-        }
-        callback();
-    });
-};
-
-var getVersion = function (modelName, id, version, callback) {
-    History.find({collectionName: modelName, collectionId: id, version: {$lte : parseInt(version, 10)}}, function (err, histories) {
+var getVersion = function (model, id, version, callback) {
+    model.findOne({_id: id}, function (err, latest) {
         if (err) {
             console.error(err);
             return callback(err, null);
         }
-        var object;
-        async.each(histories, function(history, eachCallback){
-            if(history.version === 0){
-                object = history.diff;
-            }
-            else{
-                jsondiffpatch.patch(object, history.diff);
-            }
-            eachCallback();
-        }, function(err){
-            if (err) {
-                console.error(err);
-                return callback(err, null);
-            }
-            callback(null, object);
-        })
+        History.find({collectionName: model.modelName, collectionId: id, version: {$gte : parseInt(version, 10)}},
+            {diff: 1, version: 1}, {sort: "-version"}, function (err, histories) {
+                if (err) {
+                    console.error(err);
+                    return callback(err, null);
+                }
+                var object = latest ? latest : {};
+                async.each(histories, function(history, eachCallback){
+                    jsondiffpatch.unpatch(object, history.diff);
+                    eachCallback();
+                }, function(err){
+                    if (err) {
+                        console.error(err);
+                        return callback(err, null);
+                    }
+                    callback(null, object);
+                })
+
+            })
     });
 };
 
 var getHistories = function (modelName, id, exapndableFields, callback) {
-    History.find({collectionName: modelName, collectionId: id, version:  { $gt: 0}}, function (err, histories) {
+    History.find({collectionName: modelName, collectionId: id}, function (err, histories) {
         if (err) {
             console.error(err);
             return callback(err, null);
@@ -148,15 +150,7 @@ var plugin = function lastModifiedPlugin(schema, options) {
     schema.pre("save", function (next) {
         var self = this;
         if(self.isNew) {
-            var history = new History({
-                collectionName: self.constructor.modelName,
-                collectionId: self._id,
-                diff: self,
-                user: self.__user,
-                reason: self.__reason,
-                version: 0
-            });
-            saveHistoryObject(history, next);
+            next();
         }else{
             self.constructor.findOne({_id: self._id}, function (err, original) {
                 saveDiffObject(self, original, self, self.__user, self.__reason, function(){
@@ -167,11 +161,15 @@ var plugin = function lastModifiedPlugin(schema, options) {
     });
 
     schema.pre("findOneAndUpdate", function (next) {
-        saveDiffs(this, next);
+        saveDiffs(this, function(){
+            next();
+        });
     });
 
     schema.pre("update", function (next) {
-        saveDiffs(this, next);
+        saveDiffs(this, function(){
+            next();
+        });
     });
 
     schema.pre("remove", function(next) {
