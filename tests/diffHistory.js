@@ -296,4 +296,34 @@ describe("diffHistory", function () {
         });
     });
 
+    describe("plugin: insert many", function () {
+
+        var manySamples = [
+            {def: 'many 1', ghi: 1},
+            {def: 'many 2', ghi: 2},
+            {def: 'many 3', ghi: 3},
+            {def: 'many 4', ghi: 4},
+            {def: 'many 5', ghi: 5},
+            {def: 'many 6', ghi: 6},
+            {def: 'many 7', ghi: 7},
+            {def: 'many 8', ghi: 8}
+        ];
+
+        beforeEach(function (done) {
+            Sample1.collection.insertMany(manySamples, function(err){
+                expect(err).to.null;
+                done();
+            });
+        });
+
+        it("should not have created history records because of the bulk insertion", function (done) {
+            History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(0);
+                done();
+            });
+        });
+
+    });
+
 });

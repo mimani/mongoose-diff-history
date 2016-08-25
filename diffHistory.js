@@ -148,6 +148,12 @@ var plugin = function lastModifiedPlugin(schema, options) {
     schema.pre("save", function (next) {
         var self = this;
         if(self.isNew) {
+
+            if(!self.constructor.modelName){
+                // Don't write history record when the modelName is unknown. This happens for example when using Mongoose insertMany.
+                next();
+            }
+
             var history = new History({
                 collectionName: self.constructor.modelName,
                 collectionId: self._id,
