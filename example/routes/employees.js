@@ -2,14 +2,13 @@ var express = require("express");
 var router = express.Router();
 var Logger = require("../utils/logger.js");
 var Employee = require("../models/Employee.js");
-var diffHistory = require("mongoose-diff-history/diffHistory")
+var diffHistory = require("mongoose-diff-history/diffHistory");
 
 /* GET /employees/1234 */
 router.get("/:employeeId", function (req, res, next) {
-    console.log("req.params.employeeId ", req.params.employeeId);
     Employee.find({employeeId: req.params.employeeId}).exec(function (err, employeeResult) {
         if (err) {
-            return next(err)
+            return next(err);
         }
         res.json(employeeResult[0] ? employeeResult[0] : {});
     });
@@ -27,7 +26,7 @@ router.post("/", function (req, res, next) {
 router.put("/update/:employeeId", function (req, res, next) {
         Employee.update({employeeId: req.params.employeeId}, req.body, {
             new: true,
-            __user: "Mimani",
+            __user: {name: "Mimani", role: "admin"},
             __reason: "Mimani updated"
         }, function (errFind, updatedEmp) {
             if (errFind) {
@@ -92,7 +91,7 @@ router.get("/:employeeId/version/:version", function (req, res, next) {
         diffHistory.getVersion(Employee, employeeResult[0]._id, req.params.version, function (err, oldEmployee) {
             if (err){ return next(err);}
             res.json(oldEmployee);
-        })
+        });
     })
 });
 
@@ -109,7 +108,7 @@ router.get("/:employeeId/histories", function (req, res, next) {
             return next(err)
         }
         diffHistory.getHistories("Employee", employeeResult[0]._id, ["mobile"], function (err, histories) {
-            if (err) return next(err);
+            if (err){ return next(err);}
             res.json(histories);
         })
     })

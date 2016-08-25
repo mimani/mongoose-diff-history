@@ -92,8 +92,7 @@ var getVersion = function (model, id, version, callback) {
                         return callback(err, null);
                     }
                     callback(null, object);
-                })
-
+                });
             })
     });
 };
@@ -118,8 +117,8 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
                         //    newValue = newDate.getFullYear() + "-" + (newDate.getMonth() + 1) + "-" + newDate.getDate();
                         //}
                         //else {
-                        oldValue = history.diff[key][0];
-                        newValue = history.diff[key][1];
+                        var oldValue = history.diff[key][0];
+                        var newValue = history.diff[key][1];
                         //}
                         changedValues.push(key + " from " + oldValue + " to " + newValue);
                     }
@@ -137,7 +136,7 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
             })
         }, function (err, output) {
             if (err) {
-                Logger.error(err);
+                console.error(err);
                 return callback(err, null);
             }
             return callback(null, output);
