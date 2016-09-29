@@ -97,7 +97,7 @@ var getVersion = function (model, id, version, callback) {
     });
 };
 
-var getHistories = function (modelName, id, exapndableFields, callback) {
+var getHistories = function (modelName, id, expandableFields, callback) {
     History.find({collectionName: modelName, collectionId: id}, function (err, histories) {
         if (err) {
             console.error(err);
@@ -109,7 +109,7 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
             for (var key in history.diff) {
                 if (history.diff.hasOwnProperty(key)) {
 
-                    if (exapndableFields.indexOf(key) > -1) {
+                    if (expandableFields.indexOf(key) > -1) {
                         //var oldDate = new Date(history.diff[key][0]);
                         //var newDate = new Date(history.diff[key][1]);
                         //if (oldDate != "Invalid Date" && newDate != "Invalid Date") {
@@ -132,7 +132,7 @@ var getHistories = function (modelName, id, exapndableFields, callback) {
                 changedBy: history.user,
                 changedAt: history.created_at,
                 reason: history.reason,
-                commment: comment
+                comment: comment
             })
         }, function (err, output) {
             if (err) {
