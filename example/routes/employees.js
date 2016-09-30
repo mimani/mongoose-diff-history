@@ -15,7 +15,16 @@ router.get("/:employeeId", function (req, res, next) {
 });
 
 
-/* POST /employees */
+/*
+POST /employees
+    Sample Payload:
+    {
+        "name":"Saurabh",
+        "email":"mimani.saurabh@gmail.com",
+        "mobile":"123234123",
+        "employeeId":"934934"
+    }
+*/
 router.post("/", function (req, res, next) {
     Employee.create(req.body, function (err, createOutput) {
         if (err){ return next(err);}
@@ -23,6 +32,16 @@ router.post("/", function (req, res, next) {
     });
 });
 
+/*
+PUT /employees/update/:employeeId
+    Sample Payload:
+    {
+        "name":"Saurabh",
+        "email":"mimani.saurabh@gmail.com",
+        "mobile":"123234123",
+        "employeeId":"934934"
+    }
+*/
 router.put("/update/:employeeId", function (req, res, next) {
         Employee.update({employeeId: req.params.employeeId}, req.body, {
             new: true,
@@ -38,6 +57,16 @@ router.put("/update/:employeeId", function (req, res, next) {
     }
 );
 
+/*
+ PUT /employees/:employeeId
+     Sample Payload:
+     {
+         "name":"Saurabh",
+         "email":"mimani.saurabh@gmail.com",
+         "mobile":"123234123",
+         "employeeId":"934934"
+     }
+ */
 router.put("/:employeeId", function (req, res, next) {
         Employee.find({employeeId: req.params.employeeId}, function (errFind, postFind) {
             if (errFind) {
@@ -68,6 +97,16 @@ router.put("/:employeeId", function (req, res, next) {
     }
 );
 
+/*
+ PUT /employees/findOneAndUpdate/:employeeId
+     Sample Payload:
+     {
+         "name":"Saurabh",
+         "email":"mimani.saurabh@gmail.com",
+         "mobile":"123234123",
+         "employeeId":"934934"
+     }
+ */
 router.put("/findOneAndUpdate/:employeeId", function (req, res, next) {
         Employee.findOneAndUpdate({employeeId: req.params.employeeId}, req.body, {
             new: true,

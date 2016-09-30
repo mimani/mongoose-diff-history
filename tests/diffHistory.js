@@ -123,6 +123,10 @@ describe("diffHistory", function () {
                 expect(histories[0].diff.def[1]).equal("laer");
                 expect(histories[0].user).equal("Mimani");
                 expect(histories[0].reason).equal("to test it");
+                expect(histories[0].createdAt).not.null;
+                expect(histories[0].createdAt).not.undefined;
+                expect(histories[0].updatedAt).not.null;
+                expect(histories[0].updatedAt).not.undefined;
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 done();
             });
@@ -266,6 +270,8 @@ describe("diffHistory", function () {
                 expect(historyAudits[1].comment).to.contain("ghi from 323 to 0");
                 expect(historyAudits[1].comment).to.contain("abc");
                 expect(historyAudits[1].comment).to.contain("def");
+                expect(historyAudits[1].changedAt).not.null;
+                expect(historyAudits[1].updatedAt).not.null;
                 done();
             })
         });
