@@ -187,6 +187,7 @@ describe("diffHistory", function () {
         beforeEach(function (done) {
             sample1 = new Sample1({def: "ipsum", ghi: 123});
             sample1.save(function (err, savedSample) {
+                expect(err).to.null;
                 Sample1.findOneAndUpdate({def: "ipsum"}, {ghi: 323, def: "hey  hye"}, {__user: "Mimani", __reason: "Mimani updated this also" }, function (err, updated) {
                     expect(err).to.null;
                     done();
@@ -283,6 +284,38 @@ describe("diffHistory", function () {
                 expect({}).deep.equal(oldObject);
                 done();
             })
+        });
+    });
+
+    describe("plugin: Bug: Wrong version", function () {
+        var sample1, sample2;
+        beforeEach(function (done) {
+            sample1 = new Sample1({def: "ipsum", ghi: 123});
+            sample1.save(function (err, savedSample) {
+                expect(err).to.null;
+                Sample1.findOneAndUpdate({def: "ipsum"}, {ghi: 323, def: "hey  hye"}, {__user: "Mimani", __reason: "Mimani updated this also" }, function (err, updated) {
+                    expect(err).to.null;
+                    Sample1.findOneAndUpdate({def: "hey  hye"}, {ghi: 1212, def: "hey  hye"}, {__user: "Mimani", __reason: "Mimani updated this also" }, function (err, updated) {
+                        expect(err).to.null;
+                        sample2 = new Sample1({def: "lorum", ghi: 345});
+                        sample2.save(function (err, savedSample) {
+                            expect(err).to.null;
+                            Sample1.findOneAndUpdate({def: "lorum"}, {ghi: 1919}, {__user: "Mimani", __reason: "Mimani updated this also" }, function (err, updated) {
+                                expect(err).to.null;
+                                done();
+                            })
+                        })
+                    })
+                })
+            })
+        });
+
+        it("should assign correct version to diff history", function (done) {
+            History.findOne({collectionId: sample2._id}, function (err, history) {
+                expect(err).to.null;
+                expect(history.version).equal(0);
+                done();
+            });
         });
     });
 
