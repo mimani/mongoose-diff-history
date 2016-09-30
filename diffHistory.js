@@ -1,6 +1,6 @@
 var History = require("./diffHistoryModel");
 var async = require("async");
-var jsondiffpatch = require("./node_modules/jsondiffpatch/src/main").create();
+var jsondiffpatch = require("jsondiffpatch").create();
 
 var saveHistoryObject = function (history, callback){
     history.save(function (err) {
@@ -130,7 +130,8 @@ var getHistories = function (modelName, id, expandableFields, callback) {
             var comment = "modified " + changedFields.concat(changedValues).join(", ");
             return mapCallback(null, {
                 changedBy: history.user,
-                changedAt: history.created_at,
+                changedAt: history.createdAt,
+                updatedAt: history.updatedAt,
                 reason: history.reason,
                 comment: comment
             })
