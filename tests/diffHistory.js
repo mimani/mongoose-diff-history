@@ -132,7 +132,7 @@ describe("diffHistory", function () {
             diffHistory.getHistories(Sample1.modelName, sample1._id, [], function (err, historyAudits) {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(1);
-                expect(historyAudits[0].commment).equal("modified def");
+                expect(historyAudits[0].comment).equal("modified def");
                 done();
             })
         });
@@ -176,7 +176,7 @@ describe("diffHistory", function () {
             diffHistory.getHistories(Sample1.modelName, sample1._id, ["ghi"], function (err, historyAudits) {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(1);
-                expect(historyAudits[0].commment).equal("modified ghi from 123 to 1212");
+                expect(historyAudits[0].comment).equal("modified ghi from 123 to 1212");
                 done();
             })
         });
@@ -214,7 +214,7 @@ describe("diffHistory", function () {
             diffHistory.getHistories(Sample1.modelName, sample1._id, ["ghi"], function (err, historyAudits) {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(1);
-                expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
+                expect(historyAudits[0].comment).equal("modified def, ghi from 123 to 323");
                 done();
             })
         });
@@ -262,10 +262,10 @@ describe("diffHistory", function () {
             diffHistory.getHistories(Sample1.modelName, sample1._id, ["ghi"], function (err, historyAudits) {
                 expect(err).to.null;
                 expect(historyAudits.length).equal(2);
-                expect(historyAudits[0].commment).equal("modified def, ghi from 123 to 323");
-                expect(historyAudits[1].commment).to.contain("ghi from 323 to 0");
-                expect(historyAudits[1].commment).to.contain("abc");
-                expect(historyAudits[1].commment).to.contain("def");
+                expect(historyAudits[0].comment).equal("modified def, ghi from 123 to 323");
+                expect(historyAudits[1].comment).to.contain("ghi from 323 to 0");
+                expect(historyAudits[1].comment).to.contain("abc");
+                expect(historyAudits[1].comment).to.contain("def");
                 done();
             })
         });
