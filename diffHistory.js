@@ -15,7 +15,7 @@ var saveDiffObject = function(currentObject, original, updated, user, reason, ca
     var diff = jsondiffpatch.diff(JSON.parse(JSON.stringify(original)),
         JSON.parse(JSON.stringify(updated)));
     if (diff) {
-        History.findOne().sort("-version").exec(function (err, lastHistory) {
+        History.findOne({collectionName: currentObject.constructor.modelName, collectionId: currentObject._id}).sort("-version").exec(function (err, lastHistory) {
             if (err) {
                 err.message = "Mongo Error :" + err.message;
                 return callback();
