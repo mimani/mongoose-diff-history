@@ -70,4 +70,4 @@ diffHistory.getVersion(mongooseModel, ObjectId, version, function (err, oldObjec
 
 ## Example
 ---------------
-I have created an [example](https://github.com/mimani/mongoose-diff-history/tree/master/example) express service, demonstrating this plugin via an simple employee schema, checkout `example` directory in this repo.
+I have created an [example](https://github.com/mimani/mongoose-diff-history/tree/master/example) express service (documentation [here](https://github.com/mimani/mongoose-diff-history/blob/master/example/README.md)), demonstrating this plugin via an simple employee schema, checkout `example` directory in this repo.
