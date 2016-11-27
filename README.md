@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/mimani/mongoose-diff-history.svg?branch=master)](https://travis-ci.org/mimani/mongoose-diff-history)
+[![Downloads](https://img.shields.io/npm/dt/mongoose-diff-history.svg)](https://www.npmjs.com/package/mongoose-diff-history)
 [![Codacy](https://api.codacy.com/project/badge/grade/bf1936538af048ac8d104a6c2ecd71ca)](https://www.codacy.com/app/mimani-saurabh/mongoose-diff-history)
 [![Code Climate](https://codeclimate.com/github/mimani/mongoose-diff-history/badges/gpa.svg)](https://codeclimate.com/github/mimani/mongoose-diff-history)
 [![Test Coverage](https://codeclimate.com/github/mimani/mongoose-diff-history/badges/coverage.svg)](https://codeclimate.com/github/mimani/mongoose-diff-history/coverage)
