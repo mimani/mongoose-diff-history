@@ -1,16 +1,18 @@
-var mongoose = require("mongoose");
-var historySchema = new mongoose.Schema(
-    {
-        collectionName: {type: String},
-        collectionId: {type: mongoose.Schema.Types.ObjectId},
-        diff: {},
-        user: {},
-        reason: {type: String},
-        version: {type: Number, min: 0}
-    },
-    {
-        timestamps: true
-    });
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-var History = mongoose.model("History", historySchema);
-module.exports = History;
+const historySchema = new Schema(
+  {
+    collectionName: String,
+    collectionId: Schema.Types.ObjectId,
+    diff: {},
+    user: {},
+    reason: String,
+    version: { type: Number, min: 0 }
+  },
+  {
+    timestamps: true
+  }
+);
+
+module.exports = mongoose.model('History', historySchema);
