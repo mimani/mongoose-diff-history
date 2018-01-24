@@ -11,8 +11,8 @@
     "url": "https://github.com/mimani/mongoose-diff-history"
   },
   "dependencies": {
-    "async": "^2.6.0",
-    "jsondiffpatch": "^0.1.38"
+    "jsondiffpatch": "^0.1.38",
+    "lodash.pick": "^4.4.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
@@ -36,7 +36,14 @@
   "engines": {
     "node": "*"
   },
-  "keywords": ["mongoose", "audit", "oplog", "diff", "history", "versioning"],
+  "keywords": [
+    "mongoose",
+    "audit",
+    "oplog",
+    "diff",
+    "history",
+    "versioning"
+  ],
   "bugs": {
     "url": "https://github.com/mimani/mongoose-diff-history/issues"
   },
