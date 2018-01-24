@@ -1,7 +1,7 @@
 const async = require('async');
 const diffPatcher = require('jsondiffpatch').create();
 
-const History = require('./diffHistoryModel');
+const History = require('./diffHistoryModel').model;
 
 const saveHistoryObject = function(history, callback) {
   history.save(function(err) {
