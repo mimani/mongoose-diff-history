@@ -143,16 +143,8 @@ const getHistories = function(modelName, id, expandableFields, callback) {
         for (const key in history.diff) {
           if (history.diff.hasOwnProperty(key)) {
             if (expandableFields.indexOf(key) > -1) {
-              //var oldDate = new Date(history.diff[key][0]);
-              //var newDate = new Date(history.diff[key][1]);
-              //if (oldDate != "Invalid Date" && newDate != "Invalid Date") {
-              //    oldValue = oldDate.getFullYear() + "-" + (oldDate.getMonth() + 1) + "-" + oldDate.getDate();
-              //    newValue = newDate.getFullYear() + "-" + (newDate.getMonth() + 1) + "-" + newDate.getDate();
-              //}
-              //else {
               const oldValue = history.diff[key][0];
               const newValue = history.diff[key][1];
-              //}
               changedValues.push(key + ' from ' + oldValue + ' to ' + newValue);
             } else {
               changedFields.push(key);
