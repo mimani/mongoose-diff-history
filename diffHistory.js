@@ -179,7 +179,7 @@ const getHistories = function(modelName, id, expandableFields, callback) {
   });
 };
 
-const plugin = function lastModifiedPlugin(schema, options) {
+const plugin = function lastModifiedPlugin(schema) {
   schema.pre('save', function(next) {
     const self = this;
     if (self.isNew) {
