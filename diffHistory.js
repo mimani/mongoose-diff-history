@@ -17,53 +17,52 @@ const saveDiffObject = function(currentObject, original, updated, user, reason, 
     JSON.parse(JSON.stringify(original)),
     JSON.parse(JSON.stringify(updated))
   );
-  if (diff) {
-    History.findOne({
-      collectionName: currentObject.constructor.modelName,
-      collectionId: currentObject._id
-    })
-      .sort('-version')
-      .exec(function(err, lastHistory) {
-        if (err) {
-          err.message = 'Mongo Error :' + err.message;
-          return callback();
-        }
-        const history = new History({
-          collectionName: currentObject.constructor.modelName,
-          collectionId: currentObject._id,
-          diff: diff,
-          user: user,
-          reason: reason,
-          version: lastHistory ? lastHistory.version + 1 : 0
-        });
-        saveHistoryObject(history, callback);
+
+  if (!diff) return callback();
+
+  History.findOne({
+    collectionName: currentObject.constructor.modelName,
+    collectionId: currentObject._id
+  })
+    .sort('-version')
+    .exec(function(err, lastHistory) {
+      if (err) {
+        err.message = 'Mongo Error :' + err.message;
+        return callback();
+      }
+      const history = new History({
+        collectionName: currentObject.constructor.modelName,
+        collectionId: currentObject._id,
+        diff: diff,
+        user: user,
+        reason: reason,
+        version: lastHistory ? lastHistory.version + 1 : 0
       });
-  } else {
-    callback();
-  }
+      saveHistoryObject(history, callback);
+    });
 };
 
 const saveDiffHistory = function(queryObject, currentObject, callback) {
   currentObject.constructor.findOne({ _id: currentObject._id }, function(err, selfObject) {
-    if (selfObject) {
-      const dbObject = {};
-      const updateParams = queryObject._update['$set']
-        ? queryObject._update['$set']
-        : queryObject._update;
-      Object.keys(updateParams).forEach(function(key) {
-        dbObject[key] = selfObject[key];
-      });
-      saveDiffObject(
-        currentObject,
-        dbObject,
-        updateParams,
-        queryObject.options.__user,
-        queryObject.options.__reason,
-        function() {
-          callback();
-        }
-      );
-    }
+    if (!selfObject) return;
+
+    const dbObject = {};
+    const updateParams = queryObject._update['$set']
+      ? queryObject._update['$set']
+      : queryObject._update;
+    Object.keys(updateParams).forEach(function(key) {
+      dbObject[key] = selfObject[key];
+    });
+    saveDiffObject(
+      currentObject,
+      dbObject,
+      updateParams,
+      queryObject.options.__user,
+      queryObject.options.__reason,
+      function() {
+        callback();
+      }
+    );
   });
 };
 
