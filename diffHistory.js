@@ -81,7 +81,7 @@ const getVersion = (model, id, version, cb) => {
         });
     })
     .catch(err => {
-      if (isValidCb(cb)) return cb(err);
+      if (isValidCb(cb)) return cb(err, null);
       throw err;
     });
 };
@@ -118,7 +118,7 @@ const getHistories = (modelName, id, expandableFields, cb) => {
       return histories;
     })
     .catch(err => {
-      if (isValidCb(cb)) cb(err);
+      if (isValidCb(cb)) return cb(err, null);
       throw err;
     });
 };

@@ -21,21 +21,13 @@ sampleSchema1.plugin(diffHistory.plugin);
 const Sample1 = mongoose.model('samples', sampleSchema1);
 
 describe('diffHistory', function() {
-  afterEach(function() {
-    mongoose.connection.collections['histories'].drop(function(err) {
-      if (err) {
-        console.log('Error in collection dropped ', err);
-      } else {
-        console.log('collection:histories dropped before test');
-      }
-    });
-    mongoose.connection.collections['samples'].drop(function(err) {
-      if (err) {
-        console.log('Error in collection dropped ', err);
-      } else {
-        console.log('collection:samples dropped before test');
-      }
-    });
+  afterEach(function(done) {
+    Promise.all([
+      mongoose.connection.collections['samples'].drop(),
+      mongoose.connection.collections['histories'].drop()
+    ])
+      .then(() => done())
+      .catch(done);
   });
 
   describe('plugin: getVersion', function() {
@@ -132,6 +124,16 @@ describe('diffHistory', function() {
         done();
       });
     });
+
+    it('should return an error when calling without id', function(done) {
+      diffHistory.getVersion(Sample1, '', 0, (err, oldSample) => {
+        expect(oldSample).to.be.null;
+        expect(err).to.be.an('object');
+        expect(err.name).to.equal('CastError');
+        expect(err.path).to.equal('_id');
+        done();
+      });
+    });
   });
 
   describe('plugin: pre save', function() {
@@ -186,6 +188,16 @@ describe('diffHistory', function() {
         expect(err).to.be.null;
         expect(historyAudits.length).equal(1);
         expect(historyAudits[0].comment).equal('modified def');
+        done();
+      });
+    });
+
+    it('should throw an error if trying to get histories without an id', function(done) {
+      diffHistory.getHistories(Sample1.modelName, '', [], (err, historyAudits) => {
+        expect(historyAudits).to.be.null;
+        expect(err).to.be.an('object');
+        expect(err.name).to.equal('CastError');
+        expect(err.path).to.equal('collectionId');
         done();
       });
     });
