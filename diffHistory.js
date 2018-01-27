@@ -23,7 +23,7 @@ const saveDiffObject = (currentObject, original, updated, user, reason) => {
         diff,
         user,
         reason,
-        version: lastHistory ? lastHistory.version + 1 : 0 // TODO: bad logic
+        version: lastHistory ? lastHistory.version + 1 : 0
       });
       return history.save();
     });
@@ -50,10 +50,11 @@ const saveDiffs = queryObject =>
   queryObject
     .find(queryObject._conditions)
     .cursor()
-    .eachAsync(result => saveDiffHistory(queryObject, result)); // TODO: Not sure if cursor available here, swap to mapSeries if not.
+    .eachAsync(result => saveDiffHistory(queryObject, result));
 
 const getVersion = (model, id, version) => {
-  return model.findOne({ _id: id }).then(latest => {
+  return model.findById(id).then(latest => {
+    latest = latest || {};
     return History.find(
       {
         collectionName: model.modelName,
@@ -63,16 +64,17 @@ const getVersion = (model, id, version) => {
       { diff: 1, version: 1 },
       { sort: '-version' }
     )
+      .lean()
       .cursor()
       .eachAsync(history => {
-        // TODO: Not sure if cursor available here, swap to mapSeries if not.
-        const object = latest ? latest : {};
-        return diffPatcher.unpatch(object, history.diff);
-      });
+        diffPatcher.unpatch(latest, history.diff);
+      })
+      .then(() => latest);
   });
 };
 
 const getHistories = (modelName, id, expandableFields) => {
+  const histories = [];
   return History.find({ collectionName: modelName, collectionId: id })
     .cursor()
     .eachAsync(history => {
@@ -90,14 +92,15 @@ const getHistories = (modelName, id, expandableFields) => {
         }
       }
       const comment = 'modified ' + changedFields.concat(changedValues).join(', ');
-      return {
+      histories.push({
         changedBy: history.user,
         changedAt: history.createdAt,
         updatedAt: history.updatedAt,
         reason: history.reason,
         comment: comment
-      };
-    });
+      });
+    })
+    .then(() => histories);
 };
 
 const plugin = function lastModifiedPlugin(schema) {
