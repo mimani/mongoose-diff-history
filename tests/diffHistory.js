@@ -39,7 +39,7 @@ describe('diffHistory', function() {
   });
 
   describe('plugin: getVersion', function() {
-    var sample1, sampleV1, sampleV2, sampleV3, sampleV4;
+    let sample1, sampleV1, sampleV2, sampleV3, sampleV4;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
       sample1.save(function(err, sample2) {
@@ -124,7 +124,7 @@ describe('diffHistory', function() {
   });
 
   describe('plugin: pre save', function() {
-    var sample1, firstSample;
+    let sample1, firstSample;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
       sample1.__user = 'Frank';
@@ -135,7 +135,7 @@ describe('diffHistory', function() {
         sample2.def = 'laer';
         sample2.__user = 'Mimani';
         sample2.__reason = 'to test it';
-        sample2.save(function(err, sample3) {
+        sample2.save(function(err) {
           expect(err).to.null;
           done();
         });
@@ -172,18 +172,19 @@ describe('diffHistory', function() {
   });
 
   describe('plugin: pre update', function() {
-    var sample1, sample2;
+    let sample1, sample2;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err, sample1) {
+      sample1.save(function(err) {
+        expect(err).to.null;
         sample2 = new Sample1({ def: 'lorum', ghi: 456 });
-        sample2.save(function(err, sample2) {
+        sample2.save(function(err) {
           expect(err).to.null;
           Sample1.update(
             {},
             { ghi: 1212 },
             { multi: true, __user: 'Mimani', __reason: 'Mimani updated' },
-            function(err, result) {
+            function(err) {
               expect(err).to.null;
               done();
             }
@@ -223,16 +224,16 @@ describe('diffHistory', function() {
   });
 
   describe('plugin: pre findOneAndUpdate', function() {
-    var sample1;
+    let sample1;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err, savedSample) {
+      sample1.save(function(err) {
         expect(err).to.null;
         Sample1.findOneAndUpdate(
           { def: 'ipsum' },
           { ghi: 323, def: 'hey  hye' },
           { __user: 'Mimani', __reason: 'Mimani updated this also' },
-          function(err, updated) {
+          function(err) {
             expect(err).to.null;
             done();
           }
@@ -268,10 +269,11 @@ describe('diffHistory', function() {
   });
 
   describe('plugin: post remove', function() {
-    var sample1, sample2;
+    let sample1, sample2;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err, savedSample) {
+      sample1.save(function(err) {
+        expect(err).to.null;
         Sample1.findOneAndUpdate(
           { def: 'ipsum' },
           { ghi: 323, def: 'hey  hye' },
@@ -281,7 +283,7 @@ describe('diffHistory', function() {
             sample2 = JSON.parse(JSON.stringify(updated));
             updated.__user = { name: 'Peter', role: 'developer' };
             updated.__reason = 'As this was requested';
-            updated.remove(function(err, removed) {
+            updated.remove(function(err) {
               expect(err).to.null;
               done();
             });
@@ -348,31 +350,31 @@ describe('diffHistory', function() {
   });
 
   describe('plugin: Bug: Wrong version', function() {
-    var sample1, sample2;
+    let sample1, sample2;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err, savedSample) {
+      sample1.save(function(err) {
         expect(err).to.null;
         Sample1.findOneAndUpdate(
           { def: 'ipsum' },
           { ghi: 323, def: 'hey  hye' },
           { __user: 'Mimani', __reason: 'Mimani updated this also' },
-          function(err, updated) {
+          function(err) {
             expect(err).to.null;
             Sample1.findOneAndUpdate(
               { def: 'hey  hye' },
               { ghi: 1212, def: 'hey  hye' },
               { __user: 'Mimani', __reason: 'Mimani updated this also' },
-              function(err, updated) {
+              function(err) {
                 expect(err).to.null;
                 sample2 = new Sample1({ def: 'lorum', ghi: 345 });
-                sample2.save(function(err, savedSample) {
+                sample2.save(function(err) {
                   expect(err).to.null;
                   Sample1.findOneAndUpdate(
                     { def: 'lorum' },
                     { ghi: 1919 },
                     { __user: 'Mimani', __reason: 'Mimani updated this also' },
-                    function(err, updated) {
+                    function(err) {
                       expect(err).to.null;
                       done();
                     }
