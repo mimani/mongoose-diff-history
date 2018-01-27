@@ -1,3 +1,4 @@
+const omit = require('omit-deep');
 const pick = require('lodash.pick');
 const diffPatcher = require('jsondiffpatch').create();
 
@@ -7,15 +8,19 @@ const isValidCb = cb => {
   return cb && typeof cb === 'function';
 };
 
-const saveDiffObject = (currentObject, original, updated, optsObj) => {
-  const { __user: user, __reason: reason } = optsObj || currentObject;
+const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
+  const { __user: user, __reason: reason } = metaData || currentObject;
 
   const diff = diffPatcher.diff(
     JSON.parse(JSON.stringify(original)),
     JSON.parse(JSON.stringify(updated))
   );
 
-  if (!diff) return;
+  if (opts.omit) {
+    omit(diff, opts.omit);
+  }
+
+  if (!diff || !Object.keys(diff).length) return;
 
   const collectionId = currentObject._id;
   const collectionName = currentObject.constructor.modelName;
@@ -35,22 +40,18 @@ const saveDiffObject = (currentObject, original, updated, optsObj) => {
     });
 };
 
-const saveDiffHistory = (queryObject, currentObject) => {
-  return currentObject.constructor.findOne({ _id: currentObject._id }).then(selfObject => {
-    if (!selfObject) return;
+const saveDiffHistory = (queryObject, currentObject, opts) => {
+  const updateParams = queryObject._update['$set'] || queryObject._update;
+  const dbObject = pick(currentObject, Object.keys(updateParams));
 
-    const updateParams = queryObject._update['$set'] || queryObject._update;
-    const dbObject = pick(selfObject, Object.keys(updateParams));
-
-    return saveDiffObject(currentObject, dbObject, updateParams, queryObject.options);
-  });
+  return saveDiffObject(currentObject, dbObject, updateParams, opts, queryObject.options);
 };
 
-const saveDiffs = queryObject =>
+const saveDiffs = (queryObject, opts) =>
   queryObject
     .find(queryObject._conditions)
     .cursor()
-    .eachAsync(result => saveDiffHistory(queryObject, result));
+    .eachAsync(result => saveDiffHistory(queryObject, result, opts));
 
 const getVersion = (model, id, version, cb) => {
   return model
@@ -119,30 +120,39 @@ const getHistories = (modelName, id, expandableFields, cb) => {
     });
 };
 
-const plugin = function lastModifiedPlugin(schema) {
+/**
+ * @param {Object} schema - Schema object passed by Mongoose Schema.plugin
+ * @param {Object} [opts] - Options passed by Mongoose Schema.plugin
+ * @param {string[]} [opts.omit] - Fields to omit from diffs (ex. ['a', 'b.c.d']).
+ */
+const plugin = function lastModifiedPlugin(schema, opts = {}) {
+  if (opts.omit && !Array.isArray(opts.omit)) {
+    delete opts.omit;
+  }
+
   schema.pre('save', function(next) {
     if (this.isNew) return next();
     this.constructor
       .findOne({ _id: this._id })
-      .then(original => saveDiffObject(this, original, this))
+      .then(original => saveDiffObject(this, original, this, opts))
       .then(() => next())
       .catch(next);
   });
 
   schema.pre('findOneAndUpdate', function(next) {
-    saveDiffs(this)
+    saveDiffs(this, opts)
       .then(() => next())
       .catch(next);
   });
 
   schema.pre('update', function(next) {
-    saveDiffs(this)
+    saveDiffs(this, opts)
       .then(() => next())
       .catch(next);
   });
 
   schema.pre('remove', function(next) {
-    saveDiffObject(this, this, {})
+    saveDiffObject(this, this, {}, opts)
       .then(() => next())
       .catch(next);
   });
