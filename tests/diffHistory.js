@@ -2,8 +2,8 @@ const Promise = require('bluebird');
 const expect = require('chai').expect;
 
 const mongoose = require('mongoose');
+const diffPatch = require('jsondiffpatch').create();
 
-const diffPatch = require('../node_modules/jsondiffpatch/src/main').create();
 const diffHistory = require('../diffHistory');
 const History = require('../diffHistoryModel').model;
 
