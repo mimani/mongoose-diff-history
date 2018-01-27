@@ -53,9 +53,14 @@ const saveDiffs = (queryObject, opts) =>
     .cursor()
     .eachAsync(result => saveDiffHistory(queryObject, result, opts));
 
-const getVersion = (model, id, version, cb) => {
+const getVersion = (model, id, version, queryOpts, cb) => {
+  if (typeof queryOpts === 'function') {
+    cb = queryOpts;
+    queryOpts = undefined;
+  }
+
   return model
-    .findById(id)
+    .findById(id, null, queryOpts)
     .then(latest => {
       latest = latest || {};
       return History.find(
@@ -86,6 +91,7 @@ const getVersion = (model, id, version, cb) => {
 const getHistories = (modelName, id, expandableFields, cb) => {
   const histories = [];
   return History.find({ collectionName: modelName, collectionId: id })
+    .lean()
     .cursor()
     .eachAsync(history => {
       const changedValues = [];
