@@ -42,28 +42,30 @@ describe('diffHistory', function() {
     let sample1, sampleV1, sampleV2, sampleV3, sampleV4;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err, sample2) {
-        expect(err).to.null;
-        sampleV1 = sample2.toObject();
-        sample2.def = 'laer';
-        sample2.__user = 'Mimani';
-        sample2.__reason = 'to test it';
-        sample2.save(function(err, sample3) {
-          expect(err).to.null;
-          sampleV2 = sample3.toObject();
-          sample3.ghi = 10;
-          sample3.save(function(err, sample4) {
-            expect(err).to.null;
-            sampleV3 = sample4.toObject();
-            sample4.ghi = 100;
-            sample3.save(function(err, sample5) {
-              expect(err).to.null;
-              sampleV4 = sample5.toObject();
-              done();
-            });
-          });
-        });
-      });
+      sample1
+        .save()
+        .then(sample => {
+          sampleV1 = sample.toObject();
+          sample.def = 'laer';
+          sample.__user = 'Mimani';
+          sample.__reason = 'to test it';
+          return sample.save();
+        })
+        .then(sample => {
+          sampleV2 = sample.toObject();
+          sample.ghi = 10;
+          return sample.save();
+        })
+        .then(sample => {
+          sampleV3 = sample.toObject();
+          sample.ghi = 100;
+          return sample.save();
+        })
+        .then(sample => {
+          sampleV4 = sample.toObject();
+          done();
+        })
+        .catch(done);
     });
 
     it('should return correct version for version 0', function(done) {
@@ -129,17 +131,17 @@ describe('diffHistory', function() {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
       sample1.__user = 'Frank';
       sample1.__reason = 'to create it';
-      sample1.save(function(err, sample2) {
-        expect(err).to.null;
-        firstSample = sample2.toObject();
-        sample2.def = 'laer';
-        sample2.__user = 'Mimani';
-        sample2.__reason = 'to test it';
-        sample2.save(function(err) {
-          expect(err).to.null;
-          done();
-        });
-      });
+      sample1
+        .save()
+        .then(sample => {
+          firstSample = sample.toObject();
+          sample.def = 'laer';
+          sample.__user = 'Mimani';
+          sample.__reason = 'to test it';
+          return sample.save();
+        })
+        .then(() => done())
+        .catch(done);
     });
 
     it('should create a diff object when collection is saved', function(done) {
@@ -175,22 +177,21 @@ describe('diffHistory', function() {
     let sample1, sample2;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err) {
-        expect(err).to.null;
-        sample2 = new Sample1({ def: 'lorum', ghi: 456 });
-        sample2.save(function(err) {
-          expect(err).to.null;
+      sample1
+        .save()
+        .then(() => {
+          sample2 = new Sample1({ def: 'lorum', ghi: 456 });
+          return sample2.save();
+        })
+        .then(() =>
           Sample1.update(
             {},
             { ghi: 1212 },
-            { multi: true, __user: 'Mimani', __reason: 'Mimani updated' },
-            function(err) {
-              expect(err).to.null;
-              done();
-            }
-          );
-        });
-      });
+            { multi: true, __user: 'Mimani', __reason: 'Mimani updated' }
+          )
+        )
+        .then(() => done())
+        .catch(done);
     });
 
     it('should create a diff object when collections are updated via update', function(done) {
@@ -227,18 +228,17 @@ describe('diffHistory', function() {
     let sample1;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err) {
-        expect(err).to.null;
-        Sample1.findOneAndUpdate(
-          { def: 'ipsum' },
-          { ghi: 323, def: 'hey  hye' },
-          { __user: 'Mimani', __reason: 'Mimani updated this also' },
-          function(err) {
-            expect(err).to.null;
-            done();
-          }
-        );
-      });
+      sample1
+        .save()
+        .then(() =>
+          Sample1.findOneAndUpdate(
+            { def: 'ipsum' },
+            { ghi: 323, def: 'hey  hye' },
+            { __user: 'Mimani', __reason: 'Mimani updated this also' }
+          )
+        )
+        .then(() => done())
+        .catch(done);
     });
 
     it('should create a diff object when collections are updated via update', function(done) {
@@ -272,24 +272,23 @@ describe('diffHistory', function() {
     let sample1, sample2;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err) {
-        expect(err).to.null;
-        Sample1.findOneAndUpdate(
-          { def: 'ipsum' },
-          { ghi: 323, def: 'hey  hye' },
-          { __user: 'Mimani', __reason: 'Mimani updated this also', new: true },
-          function(err, updated) {
-            expect(err).to.null;
-            sample2 = JSON.parse(JSON.stringify(updated));
-            updated.__user = { name: 'Peter', role: 'developer' };
-            updated.__reason = 'As this was requested';
-            updated.remove(function(err) {
-              expect(err).to.null;
-              done();
-            });
-          }
-        );
-      });
+      sample1
+        .save()
+        .then(() =>
+          Sample1.findOneAndUpdate(
+            { def: 'ipsum' },
+            { ghi: 323, def: 'hey  hye' },
+            { __user: 'Mimani', __reason: 'Mimani updated this also', new: true }
+          )
+        )
+        .then(updated => {
+          sample2 = JSON.parse(JSON.stringify(updated));
+          updated.__user = { name: 'Peter', role: 'developer' };
+          updated.__reason = 'As this was requested';
+          return updated.remove();
+        })
+        .then(() => done())
+        .catch(done);
     });
 
     it('should create a diff object when collections are updated via update', function(done) {
@@ -353,38 +352,35 @@ describe('diffHistory', function() {
     let sample1, sample2;
     beforeEach(function(done) {
       sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
-      sample1.save(function(err) {
-        expect(err).to.null;
-        Sample1.findOneAndUpdate(
-          { def: 'ipsum' },
-          { ghi: 323, def: 'hey  hye' },
-          { __user: 'Mimani', __reason: 'Mimani updated this also' },
-          function(err) {
-            expect(err).to.null;
-            Sample1.findOneAndUpdate(
-              { def: 'hey  hye' },
-              { ghi: 1212, def: 'hey  hye' },
-              { __user: 'Mimani', __reason: 'Mimani updated this also' },
-              function(err) {
-                expect(err).to.null;
-                sample2 = new Sample1({ def: 'lorum', ghi: 345 });
-                sample2.save(function(err) {
-                  expect(err).to.null;
-                  Sample1.findOneAndUpdate(
-                    { def: 'lorum' },
-                    { ghi: 1919 },
-                    { __user: 'Mimani', __reason: 'Mimani updated this also' },
-                    function(err) {
-                      expect(err).to.null;
-                      done();
-                    }
-                  );
-                });
-              }
-            );
-          }
-        );
-      });
+      sample1
+        .save()
+        .then(() =>
+          Sample1.findOneAndUpdate(
+            { def: 'ipsum' },
+            { ghi: 323, def: 'hey  hye' },
+            { __user: 'Mimani', __reason: 'Mimani updated this also' }
+          )
+        )
+        .then(() =>
+          Sample1.findOneAndUpdate(
+            { def: 'hey  hye' },
+            { ghi: 1212, def: 'hey  hye' },
+            { __user: 'Mimani', __reason: 'Mimani updated this also' }
+          )
+        )
+        .then(() => {
+          sample2 = new Sample1({ def: 'lorum', ghi: 345 });
+          return sample2.save();
+        })
+        .then(() =>
+          Sample1.findOneAndUpdate(
+            { def: 'lorum' },
+            { ghi: 1919 },
+            { __user: 'Mimani', __reason: 'Mimani updated this also' }
+          )
+        )
+        .then(() => done())
+        .catch(done);
     });
 
     it('should assign correct version to diff history', function(done) {
