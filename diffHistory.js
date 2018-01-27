@@ -3,6 +3,10 @@ const diffPatcher = require('jsondiffpatch').create();
 
 const History = require('./diffHistoryModel').model;
 
+const isValidCb = cb => {
+  return cb && typeof cb === 'function';
+};
+
 const saveDiffObject = (currentObject, original, updated, user, reason) => {
   const diff = diffPatcher.diff(
     JSON.parse(JSON.stringify(original)),
@@ -52,28 +56,37 @@ const saveDiffs = queryObject =>
     .cursor()
     .eachAsync(result => saveDiffHistory(queryObject, result));
 
-const getVersion = (model, id, version) => {
-  return model.findById(id).then(latest => {
-    latest = latest || {};
-    return History.find(
-      {
-        collectionName: model.modelName,
-        collectionId: id,
-        version: { $gte: parseInt(version, 10) }
-      },
-      { diff: 1, version: 1 },
-      { sort: '-version' }
-    )
-      .lean()
-      .cursor()
-      .eachAsync(history => {
-        diffPatcher.unpatch(latest, history.diff);
-      })
-      .then(() => latest);
-  });
+const getVersion = (model, id, version, cb) => {
+  return model
+    .findById(id)
+    .then(latest => {
+      latest = latest || {};
+      return History.find(
+        {
+          collectionName: model.modelName,
+          collectionId: id,
+          version: { $gte: parseInt(version, 10) }
+        },
+        { diff: 1, version: 1 },
+        { sort: '-version' }
+      )
+        .lean()
+        .cursor()
+        .eachAsync(history => {
+          diffPatcher.unpatch(latest, history.diff);
+        })
+        .then(() => {
+          if (isValidCb(cb)) return cb(null, latest);
+          return latest;
+        });
+    })
+    .catch(err => {
+      if (isValidCb(cb)) return cb(err);
+      throw err;
+    });
 };
 
-const getHistories = (modelName, id, expandableFields) => {
+const getHistories = (modelName, id, expandableFields, cb) => {
   const histories = [];
   return History.find({ collectionName: modelName, collectionId: id })
     .cursor()
@@ -100,7 +113,14 @@ const getHistories = (modelName, id, expandableFields) => {
         comment: comment
       });
     })
-    .then(() => histories);
+    .then(() => {
+      if (isValidCb(cb)) return cb(null, histories);
+      return histories;
+    })
+    .catch(err => {
+      if (isValidCb(cb)) cb(err);
+      throw err;
+    });
 };
 
 const plugin = function lastModifiedPlugin(schema) {

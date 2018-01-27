@@ -123,6 +123,15 @@ describe('diffHistory', function() {
         })
         .catch(done);
     });
+
+    it('should return correct version for version 0 using callback', function(done) {
+      diffHistory.getVersion(Sample1, sample1._id, 0, (err, oldSample) => {
+        expect(err).to.be.null;
+        expect(oldSample).to.be.an('object');
+        expect(oldSample.toObject()).to.deep.equal(sampleV1);
+        done();
+      });
+    });
   });
 
   describe('plugin: pre save', function() {
@@ -170,6 +179,15 @@ describe('diffHistory', function() {
           done();
         })
         .catch(done);
+    });
+
+    it('should return histories using callback', function(done) {
+      diffHistory.getHistories(Sample1.modelName, sample1._id, [], (err, historyAudits) => {
+        expect(err).to.be.null;
+        expect(historyAudits.length).equal(1);
+        expect(historyAudits[0].comment).equal('modified def');
+        done();
+      });
     });
   });
 
