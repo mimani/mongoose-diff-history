@@ -1,6 +1,9 @@
 const omit = require('omit-deep');
 const pick = require('lodash.pick');
-const diffPatcher = require('jsondiffpatch').create();
+
+// try to find an id property, otherwise just use the index in the array
+const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
+const diffPatcher = require('jsondiffpatch').create({ objectHash });
 
 const History = require('./diffHistoryModel').model;
 
