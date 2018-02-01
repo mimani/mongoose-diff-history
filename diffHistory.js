@@ -7,7 +7,10 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
-const saveDiffObject = (currentObject, original, updated, user, reason) => {
+
+const saveDiffObject = (currentObject, original, updated, optsObj) => {
+    const { __user: user, __reason: reason } = optsObj || currentObject;
+
     const diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
         JSON.parse(JSON.stringify(updated))
@@ -40,13 +43,7 @@ const saveDiffHistory = (queryObject, currentObject) => {
         const updateParams = queryObject._update['$set'] || queryObject._update;
         const dbObject = pick(selfObject, Object.keys(updateParams));
 
-        return saveDiffObject(
-            currentObject,
-            dbObject,
-            updateParams,
-            queryObject.options.__user,
-            queryObject.options.__reason
-        );
+        return saveDiffObject(currentObject, dbObject, updateParams, queryObject.options);
     });
 };
 
@@ -128,7 +125,7 @@ const plugin = function lastModifiedPlugin(schema) {
         if (this.isNew) return next();
         this.constructor
             .findOne({ _id: this._id })
-            .then(original => saveDiffObject(this, original, this, this.__user, this.__reason))
+            .then(original => saveDiffObject(this, original, this))
             .then(() => next())
             .catch(next);
     });
@@ -146,7 +143,7 @@ const plugin = function lastModifiedPlugin(schema) {
     });
 
     schema.pre('remove', function (next) {
-        saveDiffObject(this, this, {}, this.__user, this.__reason)
+        saveDiffObject(this, this, {})
             .then(() => next())
             .catch(next);
     });
