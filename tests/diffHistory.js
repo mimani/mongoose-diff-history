@@ -83,7 +83,7 @@ describe('diffHistory', function () {
                 .catch(done);
         });
 
-        it('should return correct version for version 2', function (done) {
+      it('should return correct version for version 2', function (done) {
             diffHistory
                 .getVersion(Sample1, sample1._id, 2, { lean: true })
                 .then(oldSample => {
@@ -94,12 +94,12 @@ describe('diffHistory', function () {
                 .catch(done);
         });
 
-        it('should return correct version for version 3', function (done) {
+        it('should return correct version for version 1', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 3, { lean: true })
+                .getVersion(Sample1, sample1._id, 1)
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
-                    expect(oldSample).to.deep.equal(sampleV4);
+                    expect(oldSample.toObject()).to.deep.equal(sampleV2);
                     done();
                 })
                 .catch(done);
