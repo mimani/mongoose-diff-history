@@ -7,6 +7,7 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
+
 const saveDiffObject = (currentObject, original, updated, optsObj) => {
     const { __user: user, __reason: reason } = optsObj || currentObject;
 

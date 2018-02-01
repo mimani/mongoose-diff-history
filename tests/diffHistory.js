@@ -14,8 +14,8 @@ mongoose.connect('mongodb://localhost:27017/tekpub_test', {
 
 const sampleSchema1 = new mongoose.Schema({
     abc: { type: Date, default: Date.now() },
-    def: { type: String },
-    ghi: { type: Number }
+    def: String,
+    ghi: Number
 });
 sampleSchema1.plugin(diffHistory.plugin);
 const Sample1 = mongoose.model('samples', sampleSchema1);
