@@ -135,6 +135,8 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         this.constructor
             .findOne({ _id: this._id })
             .then(original => saveDiffObject(this, original, this, opts))
+            .then(() => next())
+            .catch(next);
     });
 
     schema.pre('findOneAndUpdate', function (next) {
