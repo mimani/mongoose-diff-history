@@ -15,9 +15,10 @@ mongoose.connect('mongodb://localhost:27017/tekpub_test', {
 const sampleSchema1 = new mongoose.Schema({
     abc: { type: Date, default: Date.now() },
     def: String,
-    ghi: Number
+    ghi: Number,
+    ignored: String
 });
-sampleSchema1.plugin(diffHistory.plugin);
+sampleSchema1.plugin(diffHistory.plugin, { omit: ['ignored'] });
 const Sample1 = mongoose.model('samples', sampleSchema1);
 
 describe('diffHistory', function () {
@@ -133,6 +134,69 @@ describe('diffHistory', function () {
                 expect(err.path).to.equal('_id');
                 done();
             });
+        });
+    });
+
+    describe('opt: omit', function () {
+        let sample1, sampleV0, sampleV1, sampleV2;
+        const ignoredFinal = 'i2';
+        beforeEach(function (done) {
+            sample1 = new Sample1({ def: 't0', ignored: 'i0' });
+            sample1
+                .save()
+                .then(sample => {
+                    sampleV0 = sample.toObject();
+                    sample.def = 't1';
+                    sample.ignored = 'i1';
+                    return sample.save();
+                })
+                .then(sample => {
+                    sampleV1 = sample.toObject();
+                    sample.def = 't2';
+                    sample.ignored = ignoredFinal;
+                    return sample.save();
+                })
+                .then(sample => {
+                    sampleV2 = sample.toObject();
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('should return correct version for version 0, with unchanged omission', function (done) {
+            diffHistory
+                .getVersion(Sample1, sample1._id, 0)
+                .then(oldSample => {
+                    expect(oldSample).to.be.an('object');
+                    expect(oldSample.def).to.equal(sampleV0.def);
+                    expect(oldSample.ignored).to.equal(ignoredFinal);
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('should return correct version for version 1, with unchanged omission', function (done) {
+            diffHistory
+                .getVersion(Sample1, sample1._id, 1)
+                .then(oldSample => {
+                    expect(oldSample).to.be.an('object');
+                    expect(oldSample.def).to.equal(sampleV1.def);
+                    expect(oldSample.ignored).to.equal(ignoredFinal);
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('should return correct version for version 2, with unchanged omission', function (done) {
+            diffHistory
+                .getVersion(Sample1, sample1._id, 2)
+                .then(oldSample => {
+                    expect(oldSample).to.be.an('object');
+                    expect(oldSample.def).to.equal(sampleV2.def);
+                    expect(oldSample.ignored).to.equal(ignoredFinal);
+                    done();
+                })
+                .catch(done);
         });
     });
 
@@ -420,5 +484,15 @@ describe('diffHistory', function () {
                 done();
             });
         });
+    });
+});
+
+describe('diffHistory Error', function () {
+    it('should throw an error when given an omit option not string or array', function () {
+        const errSchema = new mongoose.Schema({ a: String });
+        expect(() => errSchema.plugin(diffHistory.plugin, { omit: true })).to.throw(
+            TypeError,
+            "opts.omit expects string or array, instead got 'boolean'"
+        );
     });
 });
