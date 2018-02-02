@@ -11,7 +11,7 @@ Stores and Manages all the differences and versions, any Mongo collection goes t
 
 ## Installation
 ---------------
-###npm
+### npm
 ``` sh
 npm install mongoose-diff-history
 ```
@@ -47,6 +47,22 @@ var mongoose = require('mongoose'),
     schema.plugin(diffHistory.plugin);
 ```
 
+The plugin also has an omit option which accepts either a string or array. This will omit the given
+keys from history. Follows dot syntax for deeply nested values.
+
+```js
+const mongoose = require('mongoose');
+const diffHistory = require('mongoose-diff-history/diffHistory');
+
+const schema = new mongoose.Schema({
+    someField: String,
+    ignoredField: String,
+    some: {
+        deepField: String
+    }
+});
+schema.plugin(diffHistory.plugin, { omit: ['ignoredField', 'some.deepField'] });
+```
 
 ## Helper Methods
 ---------------

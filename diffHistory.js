@@ -129,11 +129,16 @@ const getHistories = (modelName, id, expandableFields, cb) => {
 /**
  * @param {Object} schema - Schema object passed by Mongoose Schema.plugin
  * @param {Object} [opts] - Options passed by Mongoose Schema.plugin
- * @param {string[]} [opts.omit] - Fields to omit from diffs (ex. ['a', 'b.c.d']).
+ * @param {string|string[]} [opts.omit] - Fields to omit from diffs (ex. ['a', 'b.c.d']).
  */
 const plugin = function lastModifiedPlugin(schema, opts = {}) {
     if (opts.omit && !Array.isArray(opts.omit)) {
-        delete opts.omit;
+        if (typeof opts.omit === 'string') {
+            opts.omit = [opts.omit];
+        } else {
+            const errMsg = `opts.omit expects string or array, instead got '${typeof opts.omit}'`;
+            throw new TypeError(errMsg);
+        }
     }
 
     schema.pre('save', function (next) {
