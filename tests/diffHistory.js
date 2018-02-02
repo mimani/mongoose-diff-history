@@ -486,3 +486,13 @@ describe('diffHistory', function () {
         });
     });
 });
+
+describe('diffHistory Error', function () {
+    it('should throw an error when given an omit option not string or array', function () {
+        const errSchema = new mongoose.Schema({ a: String });
+        expect(() => errSchema.plugin(diffHistory.plugin, { omit: true })).to.throw(
+            TypeError,
+            "opts.omit expects string or array, instead got 'boolean'"
+        );
+    });
+});
