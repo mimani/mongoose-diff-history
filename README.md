@@ -82,6 +82,14 @@ diffHistory.getVersion(mongooseModel, ObjectId, version, function (err, oldObjec
 
 }
 ```
+You can also use Mongoose query options with getVersion like so:
+```js
+var diffHistory = require('mongoose-diff-history/diffHistory');
+diffHistory.getVersion(mongooseModel, ObjectId, version, { lean: true }, function (err, oldObject) {
+
+});
+
+```
 
 
 

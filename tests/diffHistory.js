@@ -63,10 +63,10 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 0', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 0)
+                .getVersion(Sample1, sample1._id, 0, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
-                    expect(oldSample.toObject()).to.deep.equal(sampleV1);
+                    expect(oldSample).to.deep.equal(sampleV1);
                     done();
                 })
                 .catch(done);
@@ -74,10 +74,10 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 1', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 1)
+                .getVersion(Sample1, sample1._id, 1, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
-                    expect(oldSample.toObject()).to.deep.equal(sampleV2);
+                    expect(oldSample).to.deep.equal(sampleV2);
                     done();
                 })
                 .catch(done);
@@ -85,10 +85,10 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 2', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 2)
+                .getVersion(Sample1, sample1._id, 2, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
-                    expect(oldSample.toObject()).to.deep.equal(sampleV3);
+                    expect(oldSample).to.deep.equal(sampleV3);
                     done();
                 })
                 .catch(done);
@@ -96,10 +96,10 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 3', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 3)
+                .getVersion(Sample1, sample1._id, 3, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
-                    expect(oldSample.toObject()).to.deep.equal(sampleV4);
+                    expect(oldSample).to.deep.equal(sampleV4);
                     done();
                 })
                 .catch(done);
@@ -108,10 +108,10 @@ describe('diffHistory', function () {
         //TODO: this is test case when version is greater than created in DB, as of now returning the latest object for this case
         it('should return correct version for version 4', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 3)
+                .getVersion(Sample1, sample1._id, 3, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
-                    expect(oldSample.toObject()).to.deep.equal(sampleV4);
+                    expect(oldSample).to.deep.equal(sampleV4);
                     done();
                 })
                 .catch(done);
@@ -122,6 +122,15 @@ describe('diffHistory', function () {
                 expect(err).to.be.null;
                 expect(oldSample).to.be.an('object');
                 expect(oldSample.toObject()).to.deep.equal(sampleV1);
+                done();
+            });
+        });
+
+        it('should return correct version for version 0 using callback and opts', function (done) {
+            diffHistory.getVersion(Sample1, sample1._id, 0, { lean: true }, (err, oldSample) => {
+                expect(err).to.be.null;
+                expect(oldSample).to.be.an('object');
+                expect(oldSample).to.deep.equal(sampleV1);
                 done();
             });
         });
@@ -165,7 +174,7 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 0, with unchanged omission', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 0)
+                .getVersion(Sample1, sample1._id, 0, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample.def).to.equal(sampleV0.def);
@@ -177,7 +186,7 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 1, with unchanged omission', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 1)
+                .getVersion(Sample1, sample1._id, 1, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample.def).to.equal(sampleV1.def);
@@ -189,7 +198,7 @@ describe('diffHistory', function () {
 
         it('should return correct version for version 2, with unchanged omission', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 2)
+                .getVersion(Sample1, sample1._id, 2, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample.def).to.equal(sampleV2.def);
@@ -433,7 +442,7 @@ describe('diffHistory', function () {
 
         it('should get latest version after object is removed', function (done) {
             diffHistory
-                .getVersion(Sample1, sample1._id, 2)
+                .getVersion(Sample1, sample1._id, 2, { lean: true })
                 .then(oldObject => {
                     expect({}).deep.equal(oldObject);
                     done();
