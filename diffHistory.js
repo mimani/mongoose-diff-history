@@ -56,9 +56,14 @@ const saveDiffs = (queryObject, opts) =>
         .cursor()
         .eachAsync(result => saveDiffHistory(queryObject, result, opts));
 
-const getVersion = (model, id, version, cb) => {
+const getVersion = (model, id, version, queryOpts, cb) => {
+    if (typeof queryOpts === 'function') {
+        cb = queryOpts;
+        queryOpts = undefined;
+    }
+
     return model
-        .findById(id)
+        .findById(id, null, queryOpts)
         .then(latest => {
             latest = latest || {};
             return History.find(
@@ -89,6 +94,7 @@ const getVersion = (model, id, version, cb) => {
 const getHistories = (modelName, id, expandableFields, cb) => {
     const histories = [];
     return History.find({ collectionName: modelName, collectionId: id })
+        .lean()
         .cursor()
         .eachAsync(history => {
             const changedValues = [];
@@ -126,11 +132,16 @@ const getHistories = (modelName, id, expandableFields, cb) => {
 /**
  * @param {Object} schema - Schema object passed by Mongoose Schema.plugin
  * @param {Object} [opts] - Options passed by Mongoose Schema.plugin
- * @param {string[]} [opts.omit] - Fields to omit from diffs (ex. ['a', 'b.c.d']).
+ * @param {string|string[]} [opts.omit] - Fields to omit from diffs (ex. ['a', 'b.c.d']).
  */
 const plugin = function lastModifiedPlugin(schema, opts = {}) {
     if (opts.omit && !Array.isArray(opts.omit)) {
-        delete opts.omit;
+        if (typeof opts.omit === 'string') {
+            opts.omit = [opts.omit];
+        } else {
+            const errMsg = `opts.omit expects string or array, instead got '${typeof opts.omit}'`;
+            throw new TypeError(errMsg);
+        }
     }
 
     schema.pre('save', function (next) {
