@@ -1,5 +1,6 @@
 const omit = require('omit-deep');
 const pick = require('lodash.pick');
+const mongoose = require('mongoose');
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
@@ -132,9 +133,16 @@ const getHistories = (modelName, id, expandableFields, cb) => {
 /**
  * @param {Object} schema - Schema object passed by Mongoose Schema.plugin
  * @param {Object} [opts] - Options passed by Mongoose Schema.plugin
- * @param {string|string[]} [opts.omit] - Fields to omit from diffs (ex. ['a', 'b.c.d']).
+ * @param {string} [opts.uri] - URI for MongoDB (necessary, for instance, when not using mongoose.connect).
+ * @param {string|string[]} [opts.omit] - fields to omit from diffs (ex. ['a', 'b.c.d']).
  */
 const plugin = function lastModifiedPlugin(schema, opts = {}) {
+    if (opts.uri) {
+        mongoose.connect(opts.uri, { useMongoClient: true }).catch(e => {
+            console.error('mongoose-diff-history connection error:', e);
+        });
+    }
+
     if (opts.omit && !Array.isArray(opts.omit)) {
         if (typeof opts.omit === 'string') {
             opts.omit = [opts.omit];
