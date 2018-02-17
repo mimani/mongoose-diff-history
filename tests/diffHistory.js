@@ -505,3 +505,13 @@ describe('diffHistory Error', function () {
         );
     });
 });
+
+describe('diffHistory URI Option', function () {
+    it('should connect to DB at optional URI', function () {
+        const testSchema = new mongoose.Schema({ a: String });
+        testSchema.plugin(diffHistory.plugin, { uri: 'mongodb://localhost/customUri' });
+        expect(mongoose.connections).to.be.an('array');
+        expect(mongoose.connections.length).to.equal(1);
+        expect(mongoose.connections[0].name).to.equal('customUri');
+    });
+});
