@@ -425,9 +425,59 @@ describe('diffHistory', function () {
                     expect(diffs[0].diff.def.length).to.equal(2);
                     expect(diffs[0].diff.def[0]).to.equal('ipsum');
                     expect(diffs[0].diff.def[1]).to.equal('hey  hye');
+                    expect(diffs[0].collectionName).to.equal('samples');
                     done();
                 })
                 .catch(done);
+        });
+
+        it('should return simple diffs with opts', function (done) {
+            diffHistory
+                .getDiffs(Sample1.modelName, sample1._id, { select: 'diff user' })
+                .then(diffs => {
+                    expect(diffs.length).to.equal(2);
+                    expect(diffs[0]).to.be.an('object');
+                    expect(diffs[0].diff).to.be.an('object');
+                    expect(diffs[0].diff.def).to.be.an('array');
+                    expect(diffs[0].diff.def.length).to.equal(2);
+                    expect(diffs[0].diff.def[0]).to.equal('ipsum');
+                    expect(diffs[0].diff.def[1]).to.equal('hey  hye');
+                    expect(diffs[0].collectionName).to.be.an('undefined');
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('should return simple diffs with callback and opts', function (done) {
+            diffHistory
+                .getDiffs(Sample1.modelName, sample1._id, {select: 'diff user'}, (err, diffs) => {
+                    expect(err).to.be.null;
+                    expect(diffs.length).to.equal(2);
+                    expect(diffs[0]).to.be.an('object');
+                    expect(diffs[0].diff).to.be.an('object');
+                    expect(diffs[0].diff.def).to.be.an('array');
+                    expect(diffs[0].diff.def.length).to.equal(2);
+                    expect(diffs[0].diff.def[0]).to.equal('ipsum');
+                    expect(diffs[0].diff.def[1]).to.equal('hey  hye');
+                    expect(diffs[0].collectionName).to.be.an('undefined');
+                    done();
+                });
+        });
+
+        it('should return simple diffs with callback and no opts', function (done) {
+            diffHistory
+                .getDiffs(Sample1.modelName, sample1._id, (err, diffs) => {
+                    expect(err).to.be.null;
+                    expect(diffs.length).to.equal(2);
+                    expect(diffs[0]).to.be.an('object');
+                    expect(diffs[0].diff).to.be.an('object');
+                    expect(diffs[0].diff.def).to.be.an('array');
+                    expect(diffs[0].diff.def.length).to.equal(2);
+                    expect(diffs[0].diff.def[0]).to.equal('ipsum');
+                    expect(diffs[0].diff.def[1]).to.equal('hey  hye');
+                    expect(diffs[0].collectionName).to.be.equal('samples');
+                    done();
+                });
         });
 
         it('should return histories', function (done) {
@@ -458,6 +508,18 @@ describe('diffHistory', function () {
                     done();
                 })
                 .catch(done);
+        });
+
+        it('should return histories without expandableFields and with callback', function (done) {
+            diffHistory .getHistories(Sample1.modelName, sample1._id, (err, historyAudits) => {
+                expect(err).to.be.null;
+                expect(historyAudits.length).equal(2);
+                expect(historyAudits[0].comment).equal('modified ghi, def');
+                expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                expect(historyAudits[1].changedAt).not.null;
+                expect(historyAudits[1].updatedAt).not.null;
+                done();
+            });
         });
 
         it('should get version after object is removed', function (done) {
