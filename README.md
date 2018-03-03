@@ -96,7 +96,7 @@ diffHistory.getDiffs('modelName', ObjectId, function (err, histories) {
 diffHistory.getDiffs('modelName', ObjectId).then(histories => {}).catch(console.error);
 
 // with optional query parameters:
-diffHistory.getDiffs('modelName', ObjectId, { select: 'diffs user' })
+diffHistory.getDiffs('modelName', ObjectId, { select: 'diff user' })
     .then(histories => {})
     .catch(console.error);
 ```
