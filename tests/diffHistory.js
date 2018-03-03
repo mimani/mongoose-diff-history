@@ -446,6 +446,20 @@ describe('diffHistory', function () {
                 .catch(done);
         });
 
+        it('should return histories without expandableFields', function (done) {
+            diffHistory
+                .getHistories(Sample1.modelName, sample1._id)
+                .then(historyAudits => {
+                    expect(historyAudits.length).equal(2);
+                    expect(historyAudits[0].comment).equal('modified ghi, def');
+                    expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                    expect(historyAudits[1].changedAt).not.null;
+                    expect(historyAudits[1].updatedAt).not.null;
+                    done();
+                })
+                .catch(done);
+        });
+
         it('should get version after object is removed', function (done) {
             diffHistory
                 .getVersion(Sample1, sample1._id, 1)
