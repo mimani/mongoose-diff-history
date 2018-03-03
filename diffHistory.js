@@ -92,6 +92,19 @@ const getVersion = (model, id, version, queryOpts, cb) => {
         });
 };
 
+const getDiffs = (modelName, id, cb) => {
+    return History.find({ collectionName: modelName, collectionId: id })
+        .lean()
+        .then(histories => {
+            if (isValidCb(cb)) return cb(null, histories);
+            return histories;
+        })
+        .catch(err => {
+            if (isValidCb(cb)) return cb(err, null);
+            throw err;
+        });
+};
+
 const getHistories = (modelName, id, expandableFields, cb) => {
     const histories = [];
     return History.find({ collectionName: modelName, collectionId: id })
@@ -183,5 +196,6 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
 module.exports = {
     plugin,
     getVersion,
+    getDiffs,
     getHistories
 };

@@ -40,7 +40,7 @@ _v: version
 ---------------
 Use as you would any Mongoose plugin:
 
-``` js
+```js
 var mongoose = require('mongoose'),
     diffHistory = require('mongoose-diff-history/diffHistory'),
     schema = new mongoose.Schema({ ... });
@@ -61,6 +61,7 @@ const schema = new mongoose.Schema({
         deepField: String
     }
 });
+
 schema.plugin(diffHistory.plugin, { omit: ['ignoredField', 'some.deepField'] });
 ```
 
@@ -68,27 +69,59 @@ schema.plugin(diffHistory.plugin, { omit: ['ignoredField', 'some.deepField'] });
 ---------------
 You can get all the histories created for an object using following method:
 
-``` js
-var diffHistory = require('mongoose-diff-history/diffHistory');
-diffHistory.getHistories(modelName, ObjectId, <expandable fields>, function (err, histories) {
+```js
+const diffHistory = require('mongoose-diff-history/diffHistory');
+const expandableFields = ['abc', 'def'];
 
-}
+diffHistory.getHistories('modelName', ObjectId, expandableFields, function (err, histories) {
+
+});
+
+// or, as a promise
+diffHistory.getHistories('modelName', ObjectId, expandableFields)
+    .then(histories => {})
+    .catch(console.error);
+```
+
+If you just want the raw histories return with json diff patches:
+
+```js
+const diffHistory = require('mongoose-diff-history/diffHistory');
+
+diffHistory.getDiffs('modelName', ObjectId, function (err, histories) {
+
+});
+
+// or, as a promise
+diffHistory.getDiffs('modelName', ObjectId).then(histories => {}).catch(console.error);
 ```
 
 You can get an older version of the object using following method:
-``` js
-var diffHistory = require('mongoose-diff-history/diffHistory');
+```js
+const diffHistory = require('mongoose-diff-history/diffHistory');
+
 diffHistory.getVersion(mongooseModel, ObjectId, version, function (err, oldObject) {
 
-}
+});
+
+// or, as a promise
+diffHistory.getVersion(mongooseModel, ObjectId, version)
+    .then(oldObject => {})
+    .catch(console.error);
 ```
+
 You can also use Mongoose query options with getVersion like so:
 ```js
-var diffHistory = require('mongoose-diff-history/diffHistory');
+const diffHistory = require('mongoose-diff-history/diffHistory');
+
 diffHistory.getVersion(mongooseModel, ObjectId, version, { lean: true }, function (err, oldObject) {
 
 });
 
+// or, as a promise
+diffHistory.getVersion(mongooseModel, ObjectId, version, { lean: true })
+    .then(oldObject => {})
+    .catch(console.error);
 ```
 
 

@@ -414,6 +414,22 @@ describe('diffHistory', function () {
             });
         });
 
+        it('should return simple diffs', function (done) {
+            diffHistory
+                .getDiffs(Sample1.modelName, sample1._id)
+                .then(diffs => {
+                    expect(diffs.length).to.equal(2);
+                    expect(diffs[0]).to.be.an('object');
+                    expect(diffs[0].diff).to.be.an('object');
+                    expect(diffs[0].diff.def).to.be.an('array');
+                    expect(diffs[0].diff.def.length).to.equal(2);
+                    expect(diffs[0].diff.def[0]).to.equal('ipsum');
+                    expect(diffs[0].diff.def[1]).to.equal('hey  hye');
+                    done();
+                })
+                .catch(done);
+        });
+
         it('should return histories', function (done) {
             diffHistory
                 .getHistories(Sample1.modelName, sample1._id, ['ghi'])
