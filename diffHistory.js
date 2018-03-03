@@ -107,6 +107,7 @@ const getDiffs = (modelName, id, cb) => {
 
 const getHistories = (modelName, id, expandableFields, cb) => {
     const histories = [];
+    expandableFields = expandableFields || [];
     return History.find({ collectionName: modelName, collectionId: id })
         .lean()
         .cursor()
