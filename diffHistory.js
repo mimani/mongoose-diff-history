@@ -92,8 +92,13 @@ const getVersion = (model, id, version, queryOpts, cb) => {
         });
 };
 
-const getDiffs = (modelName, id, cb) => {
-    return History.find({ collectionName: modelName, collectionId: id })
+const getDiffs = (modelName, id, opts, cb) => {
+    opts = opts || {};
+    if (typeof opts === 'function') {
+        cb = opts;
+        opts = {};
+    }
+    return History.find({ collectionName: modelName, collectionId: id }, null, opts)
         .lean()
         .then(histories => {
             if (isValidCb(cb)) return cb(null, histories);
@@ -106,8 +111,14 @@ const getDiffs = (modelName, id, cb) => {
 };
 
 const getHistories = (modelName, id, expandableFields, cb) => {
-    const histories = [];
     expandableFields = expandableFields || [];
+    if (typeof expandableFields === 'function') {
+        cb = expandableFields;
+        expandableFields = [];
+    }
+
+    const histories = [];
+
     return History.find({ collectionName: modelName, collectionId: id })
         .lean()
         .cursor()
