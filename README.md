@@ -94,6 +94,11 @@ diffHistory.getDiffs('modelName', ObjectId, function (err, histories) {
 
 // or, as a promise
 diffHistory.getDiffs('modelName', ObjectId).then(histories => {}).catch(console.error);
+
+// with optional query parameters:
+diffHistory.getDiffs('modelName', ObjectId, { select: 'diffs user' })
+    .then(histories => {})
+    .catch(console.error);
 ```
 
 You can get an older version of the object using following method:
