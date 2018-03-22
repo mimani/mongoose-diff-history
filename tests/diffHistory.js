@@ -381,7 +381,7 @@ describe('diffHistory', function () {
                     Sample1.updateOne(
                         { def: 'ipsum' },
                         { ghi: 323, def: 'hey  hye' },
-                        { __user: 'Marcel', __reason: 'Marce updated using updateOne' }
+                        { __user: 'Marcel', __reason: 'Marcel updated using updateOne' }
                     )
                 )
                 .then(() => done())
@@ -396,7 +396,7 @@ describe('diffHistory', function () {
                 expect(histories[0].diff.ghi[1]).equal(323);
                 expect(histories[0].diff.def[0]).equal('ipsum');
                 expect(histories[0].diff.def[1]).equal('hey  hye');
-                expect(histories[0].reason).equal('Mimani updated this also');
+                expect(histories[0].reason).equal('Marcel updated using updateOne');
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 expect(histories[0].collectionName).equal(Sample1.modelName);
                 done();
