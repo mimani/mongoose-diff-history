@@ -371,6 +371,50 @@ describe('diffHistory', function () {
         });
     });
 
+    describe('plugin: pre updateOne', function () {
+        let sample1;
+        beforeEach(function (done) {
+            sample1 = new Sample1({ def: 'ipsum', ghi: 123 });
+            sample1
+                .save()
+                .then(() =>
+                    Sample1.updateOne(
+                        { def: 'ipsum' },
+                        { ghi: 323, def: 'hey  hye' },
+                        { __user: 'Marcel', __reason: 'Marcel updated using updateOne' }
+                    )
+                )
+                .then(() => done())
+                .catch(done);
+        });
+
+        it('should create a diff object when collections are updated via updateOne', function (done) {
+            History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(1);
+                expect(histories[0].diff.ghi[0]).equal(123);
+                expect(histories[0].diff.ghi[1]).equal(323);
+                expect(histories[0].diff.def[0]).equal('ipsum');
+                expect(histories[0].diff.def[1]).equal('hey  hye');
+                expect(histories[0].reason).equal('Marcel updated using updateOne');
+                expect(histories[0].collectionName).equal(Sample1.modelName);
+                expect(histories[0].collectionName).equal(Sample1.modelName);
+                done();
+            });
+        });
+
+        it('should return histories', function (done) {
+            diffHistory
+                .getHistories(Sample1.modelName, sample1._id, ['ghi'])
+                .then(historyAudits => {
+                    expect(historyAudits.length).equal(1);
+                    expect(historyAudits[0].comment).equal('modified def, ghi from 123 to 323');
+                    done();
+                })
+                .catch(done);
+        });
+    });
+
     describe('plugin: post remove', function () {
         let sample1, sample2;
         beforeEach(function (done) {
