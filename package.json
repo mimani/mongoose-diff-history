@@ -1,6 +1,6 @@
 {
   "name": "mongoose-diff-history",
-  "version": "1.4.2",
+  "version": "1.5.3",
   "description": "Manage Mongo Collection diff History and versions",
   "main": "diffHistoryModel.js",
   "directories": {
