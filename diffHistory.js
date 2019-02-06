@@ -15,7 +15,9 @@ const isValidCb = cb => {
 const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
     const { __user: user, __reason: reason } = metaData || currentObject;
 
-    const diff = diffPatcher.diff(
+    let diff = {};
+
+    diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
         JSON.parse(JSON.stringify(updated))
     );
@@ -23,6 +25,17 @@ const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
     if (opts.omit) {
         omit(diff, opts.omit);
     }
+
+    if (opts.pick){
+        diff = pick(diff, opts.pick)
+    }
+
+    Object.keys(diff).forEach(k => {
+      if( (!!currentObject['isModified']  && !currentObject.isModified(k)) ||
+        !Object.keys(updated).includes(k)) {
+         delete diff[k]
+      }
+    });
 
     if (!diff || !Object.keys(diff).length) return;
 
@@ -164,9 +177,16 @@ const getHistories = (modelName, id, expandableFields, cb) => {
  */
 const plugin = function lastModifiedPlugin(schema, opts = {}) {
     if (opts.uri) {
-        mongoose.connect(opts.uri, { useMongoClient: true }).catch(e => {
+        const mongoVersion = parseInt(mongoose.version)
+        if(mongoVersion < 5){
+          mongoose.connect(opts.uri, { useMongoClient: true }).catch(e => {
             console.error('mongoose-diff-history connection error:', e);
-        });
+          });
+        } else {
+          mongoose.connect(opts.uri, { useNewUrlParser: true }).catch(e => {
+            console.error('mongoose-diff-history connection error:', e);
+          });
+        }
     }
 
     if (opts.omit && !Array.isArray(opts.omit)) {
