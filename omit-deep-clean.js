@@ -1,6 +1,6 @@
 /***************************************************************************************
  * *    Title: omit-deep
- * *    Author: Jon Schlinkert - jon.schlinkert@sellside.com 
+ * *    Author: Jon Schlinkert - jon.schlinkert@sellside.com
  * *    Modified: Gibran Rodriguez - gibran@everdays.com
  * *    Code version: 0.3.0
  * *    Availability: https://github.com/jonschlinkert/omit-deep
@@ -43,7 +43,7 @@ module.exports = function omitDeep(value, keys) {
 	var valueKeys =  value[key] && Object.keys(value[key])
         value[key] = omitDeep(value[key], keys);
     }
-   if( value[key] && Object.entries(value[key]).length  === 0 &&
+   if( value[key] && Object.values(value[key]).length  === 0 &&
        keys.some(v => valueKeys && valueKeys.includes(v))) delete value[key]
   }
 
