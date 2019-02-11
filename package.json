@@ -13,7 +13,7 @@
   "dependencies": {
     "jsondiffpatch": "^0.1.38",
     "lodash.pick": "^4.4.0",
-    "omit-deep": "^0.3.0"
+    "omit-deep": "git://github.com/izigibran/omit-deep.git#master"
   },
   "devDependencies": {
     "bluebird": "^3.5.1",

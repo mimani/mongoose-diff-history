@@ -1,6 +1,6 @@
+const omit = require('omit-deep');
 const pick = require('lodash.pick');
 const mongoose = require('mongoose');
-const omit = require('./omit-deep-clean');
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
