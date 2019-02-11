@@ -15,9 +15,7 @@ const isValidCb = cb => {
 const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
     const { __user: user, __reason: reason } = metaData || currentObject;
 
-    let diff = {};
-
-    diff = diffPatcher.diff(
+    let diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
         JSON.parse(JSON.stringify(updated))
     );
