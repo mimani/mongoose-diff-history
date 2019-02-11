@@ -8,9 +8,19 @@ const diffHistory = require('../diffHistory');
 const History = require('../diffHistoryModel').model;
 
 mongoose.Promise = Promise;
-mongoose.connect('mongodb://localhost:27017/tekpub_test', {
+
+const mongoVersion = parseInt(mongoose.version);
+if(mongoVersion < 5){
+  mongoose.connect('mongodb://localhost:27017/tekpub_test', {
     useMongoClient: true
-});
+  });
+}
+else {
+  mongoose.connect('mongodb://localhost:27017/tekpub_test', { useNewUrlParser: true }).catch((e) => {
+    console.error('mongoose-diff-history connection error:', e);
+  });
+}
+
 
 const sampleSchema1 = new mongoose.Schema({
     abc: { type: Date, default: Date.now() },
