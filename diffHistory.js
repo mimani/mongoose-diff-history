@@ -23,7 +23,7 @@ const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
     );
 
     if (opts.omit) {
-        omit(diff, opts.omit,{cleanEmpty:true});
+        omit(diff, opts.omit, {cleanEmpty: true});
     }
 
     if (opts.pick){
