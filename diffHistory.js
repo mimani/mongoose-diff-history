@@ -12,12 +12,14 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
-const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
-    const { __user: user, __reason: reason } = metaData || currentObject;
+const saveDiffObject = (currentObject, original, updated, opts, queryObject) => {
+    const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
+    const updateObject = (!!updated['toObject'])? updated.toObject({ depopulate: true }) :
+    updated;
 
     let diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
-        JSON.parse(JSON.stringify(updated))
+        JSON.parse(JSON.stringify(updateObject))
     );
 
     if (opts.omit) {
@@ -31,7 +33,7 @@ const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
     if (!diff || !Object.keys(diff).length) return;
 
     const collectionId = currentObject._id;
-    const collectionName = currentObject.constructor.modelName;
+    const collectionName = currentObject.constructor.modelName || queryObject.model.modelName;
 
     return History.findOne({ collectionId, collectionName })
         .sort('-version')
@@ -51,8 +53,13 @@ const saveDiffObject = (currentObject, original, updated, opts, metaData) => {
 const saveDiffHistory = (queryObject, currentObject, opts) => {
     const updateParams = queryObject._update["$set"] || queryObject._update["$push"] || queryObject._update;
     const dbObject = pick(currentObject, Object.keys(updateParams));
-
-    return saveDiffObject(currentObject, dbObject, updateParams, opts, queryObject.options);
+     if(queryObject._update["$push"]){
+       let originalObj = JSON.parse(JSON.stringify(dbObject));
+       let existingObjects = originalObj[Object.keys(updateParams)[0]];
+       existingObjects.push(updateParams[Object.keys(updateParams)[0]]);
+       updateParams[Object.keys(updateParams)[0]] = existingObjects;
+    }
+    return saveDiffObject(currentObject, dbObject, updateParams, opts, queryObject);
 };
 
 const saveDiffs = (queryObject, opts) =>
