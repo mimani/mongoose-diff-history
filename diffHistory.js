@@ -53,12 +53,17 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
     const updateParams = queryObject._update["$set"] || queryObject._update["$push"] || queryObject._update;
     const dbObject = pick(currentObject, Object.keys(updateParams));
-     if(queryObject._update["$push"]){
+
+    if(queryObject._update["$push"]){
        let originalObj = JSON.parse(JSON.stringify(dbObject));
-       let existingObjects = originalObj[Object.keys(updateParams)[0]];
-       existingObjects.push(updateParams[Object.keys(updateParams)[0]]);
-       updateParams[Object.keys(updateParams)[0]] = existingObjects;
+       Object.keys(updateParams).forEach(updateKey => {
+         let existingObjects = originalObj[updateKey];
+         existingObjects.push(updateParams[updateKey]);
+         updateParams[updateKey] = existingObjects
+       });
+
     }
+
     return saveDiffObject(currentObject, dbObject, updateParams, opts, queryObject);
 };
 
