@@ -635,7 +635,7 @@ describe('diffHistory', function () {
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(2);
                     expect(historyAudits[0].comment).equal('modified ghi, def');
-                    expect(historyAudits[1].comment).to.equal('modified abc, _id, def, ghi, __v');
+                    expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
                     expect(historyAudits[1].changedAt).not.null;
                     expect(historyAudits[1].updatedAt).not.null;
                     done();
@@ -648,7 +648,7 @@ describe('diffHistory', function () {
                 expect(err).to.be.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].comment).equal('modified ghi, def');
-                expect(historyAudits[1].comment).to.equal('modified abc, _id, def, ghi, __v');
+                expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
                 expect(historyAudits[1].changedAt).not.null;
                 expect(historyAudits[1].updatedAt).not.null;
                 done();
