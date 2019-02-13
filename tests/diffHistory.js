@@ -261,6 +261,8 @@ describe('diffHistory', function () {
           expect(histories.length).equal(1);
           expect(histories[0].diff.pickOnly[0]).equal('original');
           expect(histories[0].diff.pickOnly[1]).equal('changeThisOneOnly');
+          expect(histories[0].diff).to.not.contain.key('ghi');
+          expect(histories[0].diff).to.not.contain.key('def');
           done();
         });
       });
@@ -408,6 +410,8 @@ describe('diffHistory', function () {
           expect(histories.length).equal(1);
           expect(histories[0].diff.items['2'][0].type).equal('three');
           expect(histories[0].diff.things['2'][0].number).equal('three');
+          expect(histories[0].diff.items._t).equal('a');
+          expect(histories[0].diff.things._t).equal('a');
           expect(histories[0].user).equal('Gibran');
           expect(histories[0].reason).equal('TestingPushArray');
           expect(histories[0].collectionName).equal(SampleArray.modelName);
