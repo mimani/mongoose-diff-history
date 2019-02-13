@@ -21,21 +21,33 @@ else {
   });
 }
 
-
 const sampleSchema1 = new mongoose.Schema({
     abc: { type: Date, default: Date.now() },
     def: String,
     ghi: Number,
-    ignored: String
+    ignored: String,
+    items:[],
+    things:[]
 });
 sampleSchema1.plugin(diffHistory.plugin, { omit: ['ignored'] });
 const Sample1 = mongoose.model('samples', sampleSchema1);
 
+const pickSchema = new mongoose.Schema({
+  def: String,
+  ghi: Number,
+  pickOnly: String,
+
+});
+pickSchema.plugin(diffHistory.plugin, { pick: ['pickOnly'] });
+
+const PickSchema = mongoose.model('picks', pickSchema);
+
 describe('diffHistory', function () {
     afterEach(function (done) {
         Promise.all([
-            mongoose.connection.collections['samples'].drop(),
-            mongoose.connection.collections['histories'].drop()
+            mongoose.connection.collections['samples'].remove({}),
+            mongoose.connection.collections['picks'].remove({}),
+            mongoose.connection.collections['histories'].remove({})
         ])
             .then(() => done())
             .catch(done);
@@ -219,6 +231,36 @@ describe('diffHistory', function () {
         });
     });
 
+    describe('opt: pick', function () {
+      beforeEach(function (done) {
+        let pickSample
+        pickSample = new PickSchema({ def: 't0', ghi: 55 , pickOnly: 'original'});
+        pickSample
+          .save()
+          .then(pickCollection => {
+            pickCollection.__user = 'Gibran';
+            pickCollection.__reason = 'TestingPickOnly';
+            pickCollection.def = 'tryingToChangeThisWithNoHistoryForIt';
+            pickCollection.ghi = 21223;
+            pickCollection.pickOnly = 'changeThisOneOnly';
+            return pickCollection.save();
+          })
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('should only create stories with the picked field', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(1);
+          expect(histories[0].diff.pickOnly[0]).equal('original');
+          expect(histories[0].diff.pickOnly[1]).equal('changeThisOneOnly');
+          done();
+        });
+      });
+
+    });
+
     describe('plugin: pre save', function () {
         let sample1, firstSample;
         beforeEach(function (done) {
@@ -336,6 +378,37 @@ describe('diffHistory', function () {
                 .catch(done);
         });
     });
+
+    describe('plugin: preUpdate using $push for arrays', function () {
+      let sample1;
+      beforeEach(function (done) {
+        sample1 = new Sample1({items:[{type:"one"},{type: "two"}], things:[{number:"one"},{number: "two"}]
+        });
+        sample1
+          .save().then(()=>
+            Sample1.update(
+              { _id: sample1._id },
+              { $push: { items: {type:"three"}, things: {number:"three"} }},
+              { multi: true, __user: 'Gibran', __reason: 'TestingPushArray' }
+            )
+          )
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('should create a diff object when collections are updated via update', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(1);
+          expect(histories[0].diff.items['2'][0].type).equal('three');
+          expect(histories[0].diff.things['2'][0].number).equal('three');
+          expect(histories[0].user).equal('Gibran');
+          expect(histories[0].reason).equal('TestingPushArray');
+          expect(histories[0].collectionName).equal(Sample1.modelName);
+          done();
+        });
+      });
+  });
 
     describe('plugin: pre findOneAndUpdate', function () {
         let sample1;
@@ -556,7 +629,7 @@ describe('diffHistory', function () {
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(2);
                     expect(historyAudits[0].comment).equal('modified ghi, def');
-                    expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                    expect(historyAudits[1].comment).to.equal('modified abc, items, things, _id, def, ghi, __v');
                     expect(historyAudits[1].changedAt).not.null;
                     expect(historyAudits[1].updatedAt).not.null;
                     done();
@@ -569,7 +642,7 @@ describe('diffHistory', function () {
                 expect(err).to.be.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].comment).equal('modified ghi, def');
-                expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                expect(historyAudits[1].comment).to.equal('modified abc, items, things, _id, def, ghi, __v');
                 expect(historyAudits[1].changedAt).not.null;
                 expect(historyAudits[1].updatedAt).not.null;
                 done();
