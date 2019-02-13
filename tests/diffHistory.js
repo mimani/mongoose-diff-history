@@ -25,12 +25,18 @@ const sampleSchema1 = new mongoose.Schema({
     abc: { type: Date, default: Date.now() },
     def: String,
     ghi: Number,
-    ignored: String,
-    items:[],
-    things:[]
+    ignored: String
 });
 sampleSchema1.plugin(diffHistory.plugin, { omit: ['ignored'] });
 const Sample1 = mongoose.model('samples', sampleSchema1);
+
+const sampleSchemaWithArray = new mongoose.Schema({
+  items:[],
+  things:[]
+});
+
+sampleSchemaWithArray.plugin(diffHistory.plugin);
+const SampleArray = mongoose.model('samplesArray', sampleSchemaWithArray);
 
 const pickSchema = new mongoose.Schema({
   def: String,
@@ -380,14 +386,14 @@ describe('diffHistory', function () {
     });
 
     describe('plugin: preUpdate using $push for arrays', function () {
-      let sample1;
+      let sampleArr;
       beforeEach(function (done) {
-        sample1 = new Sample1({items:[{type:"one"},{type: "two"}], things:[{number:"one"},{number: "two"}]
+        sampleArr = new SampleArray({items:[{type:"one"},{type: "two"}], things:[{number:"one"},{number: "two"}]
         });
-        sample1
+        sampleArr
           .save().then(()=>
-            Sample1.update(
-              { _id: sample1._id },
+            SampleArray.update(
+              { _id: sampleArr._id },
               { $push: { items: {type:"three"}, things: {number:"three"} }},
               { multi: true, __user: 'Gibran', __reason: 'TestingPushArray' }
             )
@@ -404,7 +410,7 @@ describe('diffHistory', function () {
           expect(histories[0].diff.things['2'][0].number).equal('three');
           expect(histories[0].user).equal('Gibran');
           expect(histories[0].reason).equal('TestingPushArray');
-          expect(histories[0].collectionName).equal(Sample1.modelName);
+          expect(histories[0].collectionName).equal(SampleArray.modelName);
           done();
         });
       });
@@ -629,7 +635,7 @@ describe('diffHistory', function () {
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(2);
                     expect(historyAudits[0].comment).equal('modified ghi, def');
-                    expect(historyAudits[1].comment).to.equal('modified abc, items, things, _id, def, ghi, __v');
+                    expect(historyAudits[1].comment).to.equal('modified abc, _id, def, ghi, __v');
                     expect(historyAudits[1].changedAt).not.null;
                     expect(historyAudits[1].updatedAt).not.null;
                     done();
@@ -642,7 +648,7 @@ describe('diffHistory', function () {
                 expect(err).to.be.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].comment).equal('modified ghi, def');
-                expect(historyAudits[1].comment).to.equal('modified abc, items, things, _id, def, ghi, __v');
+                expect(historyAudits[1].comment).to.equal('modified abc, _id, def, ghi, __v');
                 expect(historyAudits[1].changedAt).not.null;
                 expect(historyAudits[1].updatedAt).not.null;
                 done();
