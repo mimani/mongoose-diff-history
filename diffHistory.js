@@ -14,12 +14,10 @@ const isValidCb = cb => {
 
 const saveDiffObject = (currentObject, original, updated, opts, queryObject) => {
     const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
-    const updateObject = (updated["toObject"])? updated.toObject({ depopulate: true }) :
-    updated;
 
     let diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
-        JSON.parse(JSON.stringify(updateObject))
+        JSON.parse(JSON.stringify(updated))
     );
 
     if (opts.omit) {
@@ -51,20 +49,29 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
 };
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
-    const updateParams = queryObject._update["$set"] || queryObject._update["$push"] || queryObject._update;
-    const dbObject = pick(currentObject, Object.keys(updateParams));
+  const updateParams = JSON.parse(JSON.stringify(
+    queryObject._update["$set"] ||
+    queryObject._update["$push"] ||
+    queryObject._update
+  ));
 
-    if(queryObject._update["$push"]){
-       let originalObj = JSON.parse(JSON.stringify(dbObject));
-       Object.keys(updateParams).forEach((updateKey) => {
-         let existingObjects = originalObj[updateKey];
-         existingObjects.push(updateParams[updateKey]);
-         updateParams[updateKey] = existingObjects;
-       });
+  const dbObject = pick(currentObject, Object.keys(updateParams));
 
-    }
+  if (queryObject._update["$push"]) {
+    Object.keys(updateParams).forEach(updateKey => {
+      updateParams[updateKey] = dbObject[updateKey].concat([
+        updateParams[updateKey]
+      ]);
+    });
+  }
 
-    return saveDiffObject(currentObject, dbObject, updateParams, opts, queryObject);
+  return saveDiffObject(
+    currentObject,
+    dbObject,
+    updateParams,
+    opts,
+    queryObject
+  );
 };
 
 const saveDiffs = (queryObject, opts) =>
@@ -205,7 +212,7 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         if (this.isNew) return next();
         this.constructor
             .findOne({ _id: this._id })
-            .then(original => saveDiffObject(this, original, this, opts))
+            .then(original => saveDiffObject(this, original, this.toObject({ depopulate: true }), opts))
             .then(() => next())
             .catch(next);
     });

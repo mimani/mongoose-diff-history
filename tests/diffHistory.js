@@ -53,6 +53,7 @@ describe('diffHistory', function () {
         Promise.all([
             mongoose.connection.collections['samples'].remove({}),
             mongoose.connection.collections['picks'].remove({}),
+            mongoose.connection.collections['samplesarrays'].remove({}),
             mongoose.connection.collections['histories'].remove({})
         ])
             .then(() => done())
