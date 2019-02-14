@@ -56,10 +56,10 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
 
     if(queryObject._update["$push"]){
        let originalObj = JSON.parse(JSON.stringify(dbObject));
-       Object.keys(updateParams).forEach(updateKey => {
+       Object.keys(updateParams).forEach((updateKey) => {
          let existingObjects = originalObj[updateKey];
          existingObjects.push(updateParams[updateKey]);
-         updateParams[updateKey] = existingObjects
+         updateParams[updateKey] = existingObjects;
        });
 
     }
