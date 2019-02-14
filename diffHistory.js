@@ -14,7 +14,7 @@ const isValidCb = cb => {
 
 const saveDiffObject = (currentObject, original, updated, opts, queryObject) => {
     const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
-    const updateObject = (!!updated['toObject'])? updated.toObject({ depopulate: true }) :
+    const updateObject = (updated["toObject"])? updated.toObject({ depopulate: true }) :
     updated;
 
     let diff = diffPatcher.diff(
