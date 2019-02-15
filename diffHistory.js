@@ -58,9 +58,9 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
   const dbObject = pick(currentObject, Object.keys(updateParams));
 
   if (queryObject._update["$push"]) {
-    Object.keys(updateParams).forEach(updateKey => {
+    Object.keys(updateParams).forEach((updateKey) => {
       // Note: need to use this there, should be no reason to fear insecure user injection.
-      
+
       /* eslint-disable security/detect-object-injection */
       updateParams[updateKey] = dbObject[updateKey].concat([
         updateParams[updateKey]
