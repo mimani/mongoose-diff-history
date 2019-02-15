@@ -419,6 +419,20 @@ describe('diffHistory', function () {
           done();
         });
       });
+
+      it('should update the array correctly', function (done) {
+        SampleArray.find({}, function (err, arrayCollections) {
+          expect(err).to.null;
+          expect(arrayCollections[0].items[0].type).equal('one');
+          expect(arrayCollections[0].items[1].type).equal('two');
+          expect(arrayCollections[0].items[2].type).equal('three');
+          expect(arrayCollections[0].things[0].number).equal('one');
+          expect(arrayCollections[0].things[1].number).equal('two');
+          expect(arrayCollections[0].things[2].number).equal('three');
+          done();
+        });
+      });
+
   });
 
     describe('plugin: pre findOneAndUpdate', function () {
