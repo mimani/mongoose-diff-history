@@ -58,7 +58,7 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
   const dbObject = pick(currentObject, Object.keys(updateParams));
 
   if (queryObject._update["$push"]) {
-    Object.keys(updateParams).forEach(updateKey => {
+    Object.keys(updateParams).forEach((updateKey) => {
       updateParams[updateKey] = dbObject[updateKey].concat([
         updateParams[updateKey]
       ]);
@@ -212,7 +212,7 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         if (this.isNew) return next();
         this.constructor
             .findOne({ _id: this._id })
-            .then(original => saveDiffObject(this, original, this.toObject({ depopulate: true }), opts))
+            .then((original) => saveDiffObject(this, original, this.toObject({ depopulate: true }), opts))
             .then(() => next())
             .catch(next);
     });
