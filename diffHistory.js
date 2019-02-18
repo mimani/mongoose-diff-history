@@ -1,6 +1,7 @@
 const omit = require('omit-deep');
 const pick = require('lodash.pick');
 const mongoose = require('mongoose');
+const {assign} = require('power-assign');
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
@@ -49,30 +50,15 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
 };
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
-  const updateParams = JSON.parse(JSON.stringify(
-    queryObject._update["$set"] ||
-    queryObject._update["$push"] ||
-    queryObject._update
+  const update = JSON.parse(JSON.stringify(queryObject._update));
+  const updateParams = Object.assign(...Object.keys(update).map(function(key) {
+    if(typeof update[key] === 'object') return update[key];return update}
   ));
-
   const dbObject = pick(currentObject, Object.keys(updateParams));
-
-  if (queryObject._update["$push"]) {
-    Object.keys(updateParams).forEach((updateKey) => {
-      // Note: need to use this there, should be no reason to fear insecure user injection.
-
-      /* eslint-disable security/detect-object-injection */
-      updateParams[updateKey] = dbObject[updateKey].concat([
-        updateParams[updateKey]
-      ]);
-      /* eslint-enable security/detect-object-injection */
-    });
-  }
-
   return saveDiffObject(
     currentObject,
     dbObject,
-    updateParams,
+    assign(dbObject, update),
     opts,
     queryObject
   );
