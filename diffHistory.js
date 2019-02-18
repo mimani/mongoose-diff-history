@@ -69,7 +69,7 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
   return saveDiffObject(
     currentObject,
     dbObject,
-    assign(dbObject, updateParams),
+    assign(dbObject, queryObject._update),
     opts,
     queryObject
   );
