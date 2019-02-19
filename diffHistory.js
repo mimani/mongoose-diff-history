@@ -52,12 +52,14 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
   const update = JSON.parse(JSON.stringify(queryObject._update));
+  /* eslint-disable security/detect-object-injection */
   const updateParams = Object.assign(...Object.keys(update).map(function(key) {
     if(typeof update[key] === "object") {
       return update[key];
     }
     return update;
   }));
+  /* eslint-enable security/detect-object-injection */
   const dbObject = pick(currentObject, Object.keys(updateParams));
   return saveDiffObject(
     currentObject,
