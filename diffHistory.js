@@ -1,8 +1,8 @@
 const omit = require('omit-deep');
 const pick = require('lodash.pick');
 const mongoose = require('mongoose');
-const {assign} = require('power-assign');
-const _ = require('lodash');
+const {assign} = require("power-assign");
+const _ = require("lodash");
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
@@ -15,10 +15,12 @@ const isValidCb = cb => {
 };
 
 function isEmptyDeep(obj) {
-  if(typeof obj ==='object') {
-    if(Object.keys(obj).length === 0) return true
-    return _.every(_.map(obj, v => isEmptyDeep(v)))
-  } else if(typeof obj ==='string') {
+  if(typeof obj === "object") {
+    if(Object.keys(obj).length === 0) {
+      return true;
+    }
+    return _.every(_.map(obj, (v) => isEmptyDeep(v)));
+  } else if(typeof obj === "string") {
     return !obj.length
   }
   return false
@@ -63,8 +65,11 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
   const update = JSON.parse(JSON.stringify(queryObject._update));
   const updateParams = Object.assign(...Object.keys(update).map(function(key) {
-    if(typeof update[key] === 'object') return update[key];return update}
-  ));
+    if(typeof update[key] === "object") {
+      return update[key];
+    }
+    return update;
+  }));
   const dbObject = pick(currentObject, Object.keys(updateParams));
   return saveDiffObject(
     currentObject,
