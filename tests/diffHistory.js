@@ -31,6 +31,7 @@ sampleSchema1.plugin(diffHistory.plugin, { omit: ['ignored'] });
 const Sample1 = mongoose.model('samples', sampleSchema1);
 
 const sampleSchemaWithArray = new mongoose.Schema({
+  info: String,
   items:[],
   things:[]
 });
@@ -397,7 +398,7 @@ describe('diffHistory', function () {
           .save().then(()=>
             SampleArray.update(
               { _id: sampleArr._id },
-              { $push: { items: {type:"three"}, things: {number:"three"} }},
+              { $push: { items: {type:"three"}, things: {number:"three"} }, $set:{info:'something'}},
               { multi: true, __user: 'Gibran', __reason: 'TestingPushArray' }
             )
           )
@@ -411,6 +412,7 @@ describe('diffHistory', function () {
           expect(histories.length).equal(1);
           expect(histories[0].diff.items['2'][0].type).equal('three');
           expect(histories[0].diff.things['2'][0].number).equal('three');
+          expect(histories[0].diff.info[0]).equal('something');
           expect(histories[0].diff.items._t).equal('a');
           expect(histories[0].diff.things._t).equal('a');
           expect(histories[0].user).equal('Gibran');
