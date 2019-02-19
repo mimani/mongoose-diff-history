@@ -13,7 +13,6 @@
   "dependencies": {
     "deep-empty-object": "^1.0.5",
     "jsondiffpatch": "^0.1.38",
-    "lodash": "^4.17.11",
     "lodash.pick": "^4.4.0",
     "omit-deep": "git://github.com/izigibran/omit-deep.git#master",
     "power-assign": "^0.2.10"
