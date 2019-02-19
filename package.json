@@ -11,6 +11,7 @@
     "url": "https://github.com/mimani/mongoose-diff-history"
   },
   "dependencies": {
+    "deep-empty-object": "^1.0.5",
     "jsondiffpatch": "^0.1.38",
     "lodash": "^4.17.11",
     "lodash.pick": "^4.4.0",

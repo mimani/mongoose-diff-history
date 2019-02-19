@@ -2,7 +2,7 @@ const omit = require('omit-deep');
 const pick = require('lodash.pick');
 const mongoose = require('mongoose');
 const {assign} = require("power-assign");
-const _ = require("lodash");
+const empty =  require('deep-empty-object');
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
@@ -13,18 +13,6 @@ const History = require('./diffHistoryModel').model;
 const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
-
-function isEmptyDeep(obj) {
-  if(typeof obj === "object") {
-    if(Object.keys(obj).length === 0) {
-      return true;
-    }
-    return _.every(_.map(obj, (v) => v && isEmptyDeep(v)));
-  } else if(typeof obj === "string") {
-    return !obj.length
-  }
-  return false
-}
 
 const saveDiffObject = (currentObject, original, updated, opts, queryObject) => {
     const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
@@ -42,7 +30,7 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
         diff = pick(diff, opts.pick);
     }
 
-    if (!diff || !Object.keys(diff).length || isEmptyDeep(diff)) return;
+    if (!diff || !Object.keys(diff).length || empty.all(diff)) return;
 
     const collectionId = currentObject._id;
     const collectionName = currentObject.constructor.modelName || queryObject.model.modelName;
