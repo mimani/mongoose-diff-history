@@ -19,7 +19,7 @@ function isEmptyDeep(obj) {
     if(Object.keys(obj).length === 0) {
       return true;
     }
-    return _.every(_.map(obj, (v) => isEmptyDeep(v)));
+    return _.every(_.map(obj, (v) => v && isEmptyDeep(v)));
   } else if(typeof obj === "string") {
     return !obj.length
   }
