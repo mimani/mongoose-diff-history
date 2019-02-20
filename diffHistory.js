@@ -2,7 +2,7 @@ const omit = require('omit-deep');
 const pick = require('lodash.pick');
 const mongoose = require('mongoose');
 const {assign} = require("power-assign");
-const empty =  require('deep-empty-object');
+const empty =  require("deep-empty-object");
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
@@ -30,7 +30,9 @@ const saveDiffObject = (currentObject, original, updated, opts, queryObject) => 
         diff = pick(diff, opts.pick);
     }
 
-    if (!diff || !Object.keys(diff).length || empty.all(diff)) return;
+    if (!diff || !Object.keys(diff).length || empty.all(diff)) {
+      return;
+    }
 
     const collectionId = currentObject._id;
     const collectionName = currentObject.constructor.modelName || queryObject.model.modelName;
