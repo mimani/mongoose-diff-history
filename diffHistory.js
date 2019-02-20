@@ -18,7 +18,7 @@ function checkRequired(opts, queryObject, updatedObject){
   if((queryObject &&!queryObject.options) && !updatedObject) return;
   const { __user: user, __reason: reason } = queryObject && queryObject.options || updatedObject;
   if (opts.required && (opts.required.includes('user') && !user ||
-      opts.required.includes('user') && !reason)
+      opts.required.includes('reason') && !reason)
   ){
     return true;
   }
