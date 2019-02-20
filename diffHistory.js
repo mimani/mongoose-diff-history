@@ -224,9 +224,8 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         this.constructor
             .findOne({ _id: this._id })
             .then((original) => {
-                 const updatedObject = this.toObject({ depopulate: true });
-                 if(checkRequired(opts, undefined, updatedObject)) return;
-                return saveDiffObject(this, original, updatedObject, opts);
+                 if(checkRequired(opts, undefined, this)) return;
+                 return saveDiffObject(this, original, this.toObject({ depopulate: true }), opts);
             })
             .then(() => next())
             .catch(next);
