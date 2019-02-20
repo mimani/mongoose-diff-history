@@ -226,7 +226,7 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         this.constructor
             .findOne({ _id: this._id })
             .then((original) => {
-                 if(checkRequired(opts, undefined, this)){ return;}
+                 if(checkRequired(opts, {}, this)){ return;}
                  return saveDiffObject(this, original, this.toObject({ depopulate: true }), opts);
             })
             .then(() => next())
