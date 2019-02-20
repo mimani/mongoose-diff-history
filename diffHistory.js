@@ -14,6 +14,16 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
+function checkRequired(opts, queryObject, updatedObject){
+  if((queryObject &&!queryObject.options) && !updatedObject) return;
+  const { __user: user, __reason: reason } = queryObject && queryObject.options || updatedObject;
+  if (opts.required && (opts.required.includes('user') && !user ||
+      opts.required.includes('user') && !reason)
+  ){
+    return true;
+  }
+}
+
 //https://eslint.org/docs/rules/complexity#when-not-to-use-it
 /* eslint-disable complexity */
 function saveDiffObject(currentObject, original, updated, opts, queryObject) {
@@ -213,30 +223,38 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         if (this.isNew) return next();
         this.constructor
             .findOne({ _id: this._id })
-            .then((original) => saveDiffObject(this, original, this.toObject({ depopulate: true }), opts))
+            .then((original) => {
+                 const updatedObject = this.toObject({ depopulate: true });
+                 if(checkRequired(opts, undefined, updatedObject)) return;
+                return saveDiffObject(this, original, updatedObject, opts);
+            })
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('findOneAndUpdate', function (next) {
+      if (checkRequired(opts,this)) return next();
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('update', function (next) {
+      if (checkRequired(opts,this)) return next();
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('updateOne', function (next) {
+      if (checkRequired(opts,this)) return next();
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('remove', function (next) {
+      if (checkRequired(opts,this)) return next();
         saveDiffObject(this, this, {}, opts)
             .then(() => next())
             .catch(next);

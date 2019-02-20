@@ -49,13 +49,25 @@ pickSchema.plugin(diffHistory.plugin, { pick: ['pickOnly'] });
 
 const PickSchema = mongoose.model('picks', pickSchema);
 
+const mandatorySchema = new mongoose.Schema({
+  __user: String,
+  __reason: String,
+  someNumber: Number,
+  someString: String,
+
+});
+mandatorySchema.plugin(diffHistory.plugin, { required: ['user', 'reason'] });
+
+const MandatorySchema = mongoose.model('mandatories', mandatorySchema);
+
 describe('diffHistory', function () {
     afterEach(function (done) {
         Promise.all([
             mongoose.connection.collections['samples'].remove({}),
             mongoose.connection.collections['picks'].remove({}),
             mongoose.connection.collections['samplesarrays'].remove({}),
-            mongoose.connection.collections['histories'].remove({})
+            mongoose.connection.collections['histories'].remove({}),
+            mongoose.connection.collections['mandatories'].remove({})
         ])
             .then(() => done())
             .catch(done);
@@ -739,6 +751,61 @@ describe('diffHistory', function () {
                 done();
             });
         });
+    });
+
+    describe('opt: requiredCheck', function () {
+      beforeEach(function (done) {
+        let mandatorySample;
+        mandatorySample = new MandatorySchema({someNumber: 55 , someString: 'string'});
+        mandatorySample
+          .save()
+          .then(mandatoryCollection => {
+            mandatoryCollection.someString = 'ThisWillNotWork';
+            mandatoryCollection.someNumber = 99932;
+            return mandatoryCollection.save();
+          })
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('it should not create histories', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(0);
+          done();
+        });
+      });
+
+    });
+
+    describe('opt: requiredValid fields', function () {
+      beforeEach(function (done) {
+        let mandatorySample;
+        mandatorySample = new MandatorySchema({someNumber: 55 , someString: 'string'});
+        mandatorySample
+          .save()
+          .then(mandatoryCollection => {
+            mandatoryCollection.someString = 'ThisUpdateIsValid';
+            mandatoryCollection.__user = "Gibran";
+            mandatoryCollection.__reason = "TestingRequired";
+            return mandatoryCollection.save();
+          })
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('it should not create histories', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(1);
+          expect(histories[0].diff.someString[0]).equal('string');
+          expect(histories[0].diff.someString[1]).equal('ThisUpdateIsValid');
+          expect(histories[0].user).equal('Gibran');
+          expect(histories[0].reason).equal('TestingRequired');
+          done();
+        });
+      });
+
     });
 });
 
