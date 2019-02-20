@@ -14,18 +14,20 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
+//https://eslint.org/docs/rules/complexity#when-not-to-use-it
+/* eslint-disable complexity */
 function checkRequired(opts, queryObject, updatedObject){
-  if((queryObject &&!queryObject.options) && !updatedObject) return;
+  if((queryObject &&!queryObject.options) && !updatedObject){
+    return;
+  }
   const { __user: user, __reason: reason } = queryObject && queryObject.options || updatedObject;
-  if (opts.required && (opts.required.includes('user') && !user ||
-      opts.required.includes('reason') && !reason)
+  if (opts.required && (opts.required.includes("user") && !user ||
+      opts.required.includes("reason") && !reason)
   ){
     return true;
   }
 }
 
-//https://eslint.org/docs/rules/complexity#when-not-to-use-it
-/* eslint-disable complexity */
 function saveDiffObject(currentObject, original, updated, opts, queryObject) {
     const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
 
@@ -224,7 +226,7 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         this.constructor
             .findOne({ _id: this._id })
             .then((original) => {
-                 if(checkRequired(opts, undefined, this)) return;
+                 if(checkRequired(opts, undefined, this)){ return;}
                  return saveDiffObject(this, original, this.toObject({ depopulate: true }), opts);
             })
             .then(() => next())
@@ -232,28 +234,28 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
     });
 
     schema.pre('findOneAndUpdate', function (next) {
-      if (checkRequired(opts,this)) return next();
+      if (checkRequired(opts,this)) {return next();}
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('update', function (next) {
-      if (checkRequired(opts,this)) return next();
+      if (checkRequired(opts,this)) {return next();}
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('updateOne', function (next) {
-      if (checkRequired(opts,this)) return next();
+      if (checkRequired(opts,this)) {return next();}
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('remove', function (next) {
-      if (checkRequired(opts,this)) return next();
+      if (checkRequired(opts,this)) {return next();}
         saveDiffObject(this, this, {}, opts)
             .then(() => next())
             .catch(next);
