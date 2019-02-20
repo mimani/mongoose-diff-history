@@ -794,7 +794,7 @@ describe('diffHistory', function () {
           .catch(done);
       });
 
-      it('it should not create histories', function (done) {
+      it('it should create histories', function (done) {
         History.find({}, function (err, histories) {
           expect(err).to.null;
           expect(histories.length).equal(1);
