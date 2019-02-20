@@ -14,6 +14,8 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
+//https://eslint.org/docs/rules/complexity#when-not-to-use-it
+/* eslint-disable complexity */
 function saveDiffObject(currentObject, original, updated, opts, queryObject) {
     const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
 
@@ -50,7 +52,8 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
             });
             return history.save();
         });
-};
+}
+/* eslint-disable complexity */
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
   const update = JSON.parse(JSON.stringify(queryObject._update));
