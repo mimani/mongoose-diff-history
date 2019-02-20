@@ -14,7 +14,7 @@ const isValidCb = cb => {
     return cb && typeof cb === 'function';
 };
 
-const saveDiffObject = (currentObject, original, updated, opts, queryObject) => {
+function saveDiffObject(currentObject, original, updated, opts, queryObject) {
     const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
 
     let diff = diffPatcher.diff(
