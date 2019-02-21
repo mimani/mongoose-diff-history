@@ -8,9 +8,18 @@ const diffHistory = require('../diffHistory');
 const History = require('../diffHistoryModel').model;
 
 mongoose.Promise = Promise;
-mongoose.connect('mongodb://localhost:27017/tekpub_test', {
+
+const mongoVersion = parseInt(mongoose.version);
+if(mongoVersion < 5){
+  mongoose.connect('mongodb://localhost:27017/tekpub_test', {
     useMongoClient: true
-});
+  });
+}
+else {
+  mongoose.connect('mongodb://localhost:27017/tekpub_test', { useNewUrlParser: true }).catch((e) => {
+    console.error('mongoose-diff-history connection error:', e);
+  });
+}
 
 const sampleSchema1 = new mongoose.Schema({
     abc: { type: Date, default: Date.now() },
@@ -21,11 +30,44 @@ const sampleSchema1 = new mongoose.Schema({
 sampleSchema1.plugin(diffHistory.plugin, { omit: ['ignored'] });
 const Sample1 = mongoose.model('samples', sampleSchema1);
 
+const sampleSchemaWithArray = new mongoose.Schema({
+  info: String,
+  items:[],
+  things:[]
+});
+
+sampleSchemaWithArray.plugin(diffHistory.plugin);
+const SampleArray = mongoose.model('samplesArray', sampleSchemaWithArray);
+
+const pickSchema = new mongoose.Schema({
+  def: String,
+  ghi: Number,
+  pickOnly: String,
+
+});
+pickSchema.plugin(diffHistory.plugin, { pick: ['pickOnly'] });
+
+const PickSchema = mongoose.model('picks', pickSchema);
+
+const mandatorySchema = new mongoose.Schema({
+  __user: String,
+  __reason: String,
+  someNumber: Number,
+  someString: String,
+
+});
+mandatorySchema.plugin(diffHistory.plugin, { required: ['user', 'reason'] });
+
+const MandatorySchema = mongoose.model('mandatories', mandatorySchema);
+
 describe('diffHistory', function () {
     afterEach(function (done) {
         Promise.all([
-            mongoose.connection.collections['samples'].drop(),
-            mongoose.connection.collections['histories'].drop()
+            mongoose.connection.collections['samples'].remove({}),
+            mongoose.connection.collections['picks'].remove({}),
+            mongoose.connection.collections['samplesarrays'].remove({}),
+            mongoose.connection.collections['histories'].remove({}),
+            mongoose.connection.collections['mandatories'].remove({})
         ])
             .then(() => done())
             .catch(done);
@@ -209,6 +251,38 @@ describe('diffHistory', function () {
         });
     });
 
+    describe('opt: pick', function () {
+      beforeEach(function (done) {
+        let pickSample
+        pickSample = new PickSchema({ def: 't0', ghi: 55 , pickOnly: 'original'});
+        pickSample
+          .save()
+          .then(pickCollection => {
+            pickCollection.__user = 'Gibran';
+            pickCollection.__reason = 'TestingPickOnly';
+            pickCollection.def = 'tryingToChangeThisWithNoHistoryForIt';
+            pickCollection.ghi = 21223;
+            pickCollection.pickOnly = 'changeThisOneOnly';
+            return pickCollection.save();
+          })
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('should only create stories with the picked field', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(1);
+          expect(histories[0].diff.pickOnly[0]).equal('original');
+          expect(histories[0].diff.pickOnly[1]).equal('changeThisOneOnly');
+          expect(histories[0].diff).to.not.contain.key('ghi');
+          expect(histories[0].diff).to.not.contain.key('def');
+          done();
+        });
+      });
+
+    });
+
     describe('plugin: pre save', function () {
         let sample1, firstSample;
         beforeEach(function (done) {
@@ -326,6 +400,54 @@ describe('diffHistory', function () {
                 .catch(done);
         });
     });
+
+    describe('plugin: preUpdate using $push for arrays', function () {
+      let sampleArr;
+      beforeEach(function (done) {
+        sampleArr = new SampleArray({items:[{type:"one"},{type: "two"}], things:[{number:"one"},{number: "two"}]
+        });
+        sampleArr
+          .save().then(()=>
+            SampleArray.update(
+              { _id: sampleArr._id },
+              { $push: { items: {type:"three"}, things: {number:"three"} }, $set:{info:'something'}},
+              { multi: true, __user: 'Gibran', __reason: 'TestingPushArray' }
+            )
+          )
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('should create a diff object when collections are updated via update', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(1);
+          expect(histories[0].diff.items['2'][0].type).equal('three');
+          expect(histories[0].diff.things['2'][0].number).equal('three');
+          expect(histories[0].diff.info[0]).equal('something');
+          expect(histories[0].diff.items._t).equal('a');
+          expect(histories[0].diff.things._t).equal('a');
+          expect(histories[0].user).equal('Gibran');
+          expect(histories[0].reason).equal('TestingPushArray');
+          expect(histories[0].collectionName).equal(SampleArray.modelName);
+          done();
+        });
+      });
+
+      it('should update the array correctly', function (done) {
+        SampleArray.find({}, function (err, arrayCollections) {
+          expect(err).to.null;
+          expect(arrayCollections[0].items[0].type).equal('one');
+          expect(arrayCollections[0].items[1].type).equal('two');
+          expect(arrayCollections[0].items[2].type).equal('three');
+          expect(arrayCollections[0].things[0].number).equal('one');
+          expect(arrayCollections[0].things[1].number).equal('two');
+          expect(arrayCollections[0].things[2].number).equal('three');
+          done();
+        });
+      });
+
+  });
 
     describe('plugin: pre findOneAndUpdate', function () {
         let sample1;
@@ -629,6 +751,61 @@ describe('diffHistory', function () {
                 done();
             });
         });
+    });
+
+    describe('opt: requiredCheck', function () {
+      beforeEach(function (done) {
+        let mandatorySample;
+        mandatorySample = new MandatorySchema({someNumber: 55 , someString: 'string'});
+        mandatorySample
+          .save()
+          .then(mandatoryCollection => {
+            mandatoryCollection.someString = 'ThisWillNotWork';
+            mandatoryCollection.someNumber = 99932;
+            return mandatoryCollection.save();
+          })
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('it should not create histories', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(0);
+          done();
+        });
+      });
+
+    });
+
+    describe('opt: requiredValid fields', function () {
+      beforeEach(function (done) {
+        let mandatorySample;
+        mandatorySample = new MandatorySchema({someNumber: 55 , someString: 'string'});
+        mandatorySample
+          .save()
+          .then(mandatoryCollection => {
+            mandatoryCollection.someString = 'ThisUpdateIsValid';
+            mandatoryCollection.__user = "Gibran";
+            mandatoryCollection.__reason = "TestingRequired";
+            return mandatoryCollection.save();
+          })
+          .then(() => done())
+          .catch(done);
+      });
+
+      it('it should create histories', function (done) {
+        History.find({}, function (err, histories) {
+          expect(err).to.null;
+          expect(histories.length).equal(1);
+          expect(histories[0].diff.someString[0]).equal('string');
+          expect(histories[0].diff.someString[1]).equal('ThisUpdateIsValid');
+          expect(histories[0].user).equal('Gibran');
+          expect(histories[0].reason).equal('TestingRequired');
+          done();
+        });
+      });
+
     });
 });
 
