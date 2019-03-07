@@ -29,7 +29,7 @@ function checkRequired(opts, queryObject, updatedObject){
 }
 
 function saveDiffObject(currentObject, original, updated, opts, queryObject) {
-    const { __user: user, __reason: reason } = queryObject && queryObject.options || currentObject;
+    const { __user: user, __reason: reason, __session: session } = queryObject && queryObject.options || currentObject;
 
     let diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
@@ -62,6 +62,10 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
                 reason,
                 version: lastHistory ? lastHistory.version + 1 : 0
             });
+            if (session) {
+                // console.log('history in transaction');
+                return history.save({ session });
+            }
             return history.save();
         });
 }
