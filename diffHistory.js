@@ -81,6 +81,7 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
     return update;
   }));
   /* eslint-enable security/detect-object-injection */
+  delete queryObject._update["$setOnInsert"];
   const dbObject = pick(currentObject, Object.keys(updateParams));
   return saveDiffObject(
     currentObject,

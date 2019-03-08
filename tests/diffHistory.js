@@ -458,15 +458,15 @@ describe('diffHistory', function () {
                 .then(() =>
                     Sample1.findOneAndUpdate(
                         { def: 'ipsum' },
-                        { ghi: 323, def: 'hey  hye' },
-                        { __user: 'Mimani', __reason: 'Mimani updated this also' }
+                        { $set: { ghi: 323, def: 'hey  hye' } },
+                        { __user: 'Mimani', __reason: 'Mimani updated this also', upsert: true }
                     )
                 )
                 .then(() => done())
                 .catch(done);
         });
 
-        it('should create a diff object when collections are updated via update', function (done) {
+        it('should create a diff object when collections are updated via update (with upsert option)', function (done) {
             History.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
