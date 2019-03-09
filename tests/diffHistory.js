@@ -10,7 +10,8 @@ const semver = require('semver');
 mongoose.Promise = Promise;
 
 const mongoVersion = parseInt(mongoose.version);
-const testTransaction = false; /* disable as most people don't have cluster */
+// const testTransaction = false; /* disable as most people don't have cluster */
+let session = null;
 console.log(`mongoVersion:${mongoose.version}`);
 if(mongoVersion < 5){
   mongoose.connect('mongodb://localhost:27017/tekpub_test', {
@@ -22,10 +23,25 @@ else {
   *  to test transaction need a mongoDBv4, and start with cluster, see below link.
   *  http://thecodebarbarian.com/introducing-run-rs-zero-config-mongodb-runner.html
   *  and remember to stop your original non cluster mongoDB
-  *  also need to use mongoose version 5.2.0 or later
+  *  also need to use mongoose version 5.2.9 or later
   */
-  const uri = (testTransaction) ? 'mongodb://localhost:27017,localhost:27018,localhost:27019/tekpub_test?replicaSet=rs' : 'mongodb://localhost:27017/tekpub_test';
-  mongoose.connect(uri, { useNewUrlParser: true }).catch((e) => {
+  // const uri = (testTransaction) ? 'mongodb://localhost:27017,localhost:27018,localhost:27019/tekpub_test?replicaSet=rs' : 'mongodb://localhost:27017/tekpub_test';
+  const uri = 'mongodb://localhost:27017/tekpub_test';
+  mongoose.connect(uri, { useNewUrlParser: true }).then(() => {
+    mongoose.startSession().then(_session => {
+        try {
+            _session.startTransaction();
+            _session.abortTransaction();
+            session = _session;
+            console.log('session supported');
+        } catch (e) {
+            console.log(`session not supported ${e}`);
+        }
+    }).catch((e) => {
+        console.log(`session not supported ${e}`);
+        session = null;
+    });
+  }).catch((e) => {
     console.error('mongoose-diff-history connection error:', e);
   });
 }
@@ -834,37 +850,34 @@ describe('diffHistory', function () {
       });
     });
 
-    if (!testTransaction) {
-        console.log(`transaction test skipped.`);
-    } else if ( semver.lt(mongoose.version, '5.2.0') || (!testTransaction)  ) {
-        console.log(`transaction not supported [mongoose.version:${mongoose.version} need >= 5.2] skip transaction test`);
-    } else {
-        console.log(`transaction supported ${mongoose.version}`);
-        describe('test abort transaction with __session pass to history', function () {
+    /* transaction test should be at the bottom of the script so that have time for the session check*/
+    describe('transaction', function () {
+        before(function() {
+            // check if session is available, if not skip all test.
+            if (!session) {
+              this.skip();
+            }
+        });
+        afterEach(function (done) {
+            Promise.all([
+                mongoose.connection.collections['samples'].remove({}),
+            ])
+                .then(() => done())
+                .catch(done);
+        });
+        describe('abort transaction with __session pass to history', function () {
             beforeEach(function (done) {
-                let session = null;
-                mongoose.startSession()
-                .then(_session => {
-                    session = _session;
-                    session.startTransaction();
-                    return Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session });
-                })
+                session.startTransaction();
+                Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session })
                 .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session }))
                 .then(() => Sample1.findOneAndUpdate(
                     { def: 'Test1'},
                     { $set: {ghi: 3 } },
                     { __user: 'Mimani', __reason: 'Mimani updated this also', session: session, __session: session }
                     ))
-                .then(() => session.abortTransaction()) // commitTransaction // abortTransaction
+                .then(() => session.abortTransaction())
                 .then(() => done())
-                .catch((error) => {
-                    if (error === 'MongoError: Current topology does not support sessions') {
-                        console.log('mongo not with replica set see http://thecodebarbarian.com/introducing-run-rs-zero-config-mongodb-runner.html');
-                        done();
-                    } else {
-                        done(error);
-                    }
-                });
+                .catch(done);
             });
             it('it should rollback all document with abortTransaction', function (done) {
                 Sample1.find({}, function (err, doc) {
@@ -884,14 +897,9 @@ describe('diffHistory', function () {
 
         describe('test abort transaction without __session pass to history', function () {
             beforeEach(function (done) {
-                let session = null;
-                mongoose.startSession()
-                .then(_session => {
-                    session = _session;
-                    session.startTransaction();
-                    return Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session, __session: session });
-                })
-                .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session, __session: session }))
+                session.startTransaction();
+                Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session })
+                .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session }))
                 .then(() => Sample1.findOneAndUpdate(
                     { def: 'Test1' }, 
                     { $set: {ghi: 3 } }, 
@@ -899,14 +907,7 @@ describe('diffHistory', function () {
                     ))
                 .then(() => session.abortTransaction())
                 .then(() => done())
-                .catch((error) => {
-                    if (error === 'MongoError: Current topology does not support sessions') {
-                        console.log('mongo not with replica set see http://thecodebarbarian.com/introducing-run-rs-zero-config-mongodb-runner.html');
-                        done();
-                    } else {
-                        done(error);
-                    }
-                });
+                .catch(done);
             });
             it('it should rollback all document with abortTransaction', function (done) {
                 Sample1.find({}, function (err, doc) {
@@ -931,13 +932,8 @@ describe('diffHistory', function () {
 
         describe('test commit transaction with __session pass to history', function () {
             beforeEach(function (done) {
-                let session = null;
-                mongoose.startSession()
-                .then(_session => {
-                    session = _session;
-                    session.startTransaction();
-                    return Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session });
-                })
+                session.startTransaction();
+                Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session })
                 .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session }))
                 .then(() => Sample1.findOneAndUpdate(
                     { def: 'Test1' }, 
@@ -945,14 +941,7 @@ describe('diffHistory', function () {
                     { __user: 'Mimani', __reason: 'Mimani updated this also', session: session, __session: session }))
                 .then(() => session.commitTransaction())
                 .then(() => done())
-                .catch((error) => {
-                    if (error === 'MongoError: Current topology does not support sessions') {
-                        console.log('mongo not with replica set see http://thecodebarbarian.com/introducing-run-rs-zero-config-mongodb-runner.html');
-                        done();
-                    } else {
-                        done(error);
-                    }
-                });
+                .catch(done);
             });
             it('it should create document with commitTransaction', function (done) {
                 Sample1.find({}, function (err, doc) {
@@ -974,7 +963,7 @@ describe('diffHistory', function () {
                 });
             });
         });
-    }
+    });
 });
 
 describe('diffHistory Error', function () {
@@ -996,3 +985,4 @@ describe('diffHistory URI Option', function () {
         expect(mongoose.connections[0].name).to.equal('customUri');
     });
 });
+
