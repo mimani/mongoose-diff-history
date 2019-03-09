@@ -27,22 +27,36 @@ else {
   */
   // const uri = (testTransaction) ? 'mongodb://localhost:27017,localhost:27018,localhost:27019/tekpub_test?replicaSet=rs' : 'mongodb://localhost:27017/tekpub_test';
   const uri = 'mongodb://localhost:27017/tekpub_test';
-  mongoose.connect(uri, { useNewUrlParser: true }).then(() => {
-    mongoose.startSession().then(_session => {
-        try {
-            _session.startTransaction();
-            _session.abortTransaction();
-            session = _session;
-            console.log('session supported');
-        } catch (e) {
-            console.log(`session not supported ${e}`);
+  const uriRS = 'mongodb://localhost:27017,localhost:27018,localhost:27019/tekpub_test?replicaSet=rs';
+  mongoose.connect(uriRS, { useNewUrlParser: true }).then(() => {
+    console.log('MongoDB connected');
+    mongoose.connection.db.admin().serverInfo().then((serverInfo) => {
+        const dbVersion = serverInfo.version;
+        if ( semver.gte(dbVersion, '4.0.0') ){
+            mongoose.startSession().then(_session => {
+                try {
+                    _session.startTransaction();
+                    _session.abortTransaction();
+                    session = _session;
+                    console.log('session supported');
+                } catch (e) {
+                    console.log(`session not supported ${e}`);
+                }
+            }).catch((e) => {
+                console.log(`session not supported ${e}`);
+                session = null;
+            });
+        } else {
+            console.log('MongoDB version < 4.0.0 transaction not supported.');
         }
-    }).catch((e) => {
-        console.log(`session not supported ${e}`);
-        session = null;
     });
   }).catch((e) => {
-    console.error('mongoose-diff-history connection error:', e);
+    console.warn(`Unable to connect in replca mode - falling back normal - ${e}`);
+    mongoose.connect(uri, { useNewUrlParser: true }).then(() => {
+        console.log('MongoDB connected');
+    }).catch((e1) => {
+        console.error('mongoose-diff-history connection error:', e1);
+    });
   });
 }
 
