@@ -6,18 +6,57 @@ const diffPatch = require('jsondiffpatch').create();
 
 const diffHistory = require('../diffHistory');
 const History = require('../diffHistoryModel').model;
-
+const semver = require('semver');
 mongoose.Promise = Promise;
 
 const mongoVersion = parseInt(mongoose.version);
+// const testTransaction = false; /* disable as most people don't have cluster */
+let session = null;
+console.log(`mongoVersion:${mongoose.version}`);
 if(mongoVersion < 5){
   mongoose.connect('mongodb://localhost:27017/tekpub_test', {
     useMongoClient: true
   });
 }
 else {
-  mongoose.connect('mongodb://localhost:27017/tekpub_test', { useNewUrlParser: true }).catch((e) => {
-    console.error('mongoose-diff-history connection error:', e);
+ /*
+  *  to test transaction need a mongoDBv4, and start with cluster, see below link.
+  *  http://thecodebarbarian.com/introducing-run-rs-zero-config-mongodb-runner.html
+  *  and remember to stop your original non cluster mongoDB
+  *  also need to use mongoose version 5.2.9 or later
+  */
+  // const uri = (testTransaction) ? 'mongodb://localhost:27017,localhost:27018,localhost:27019/tekpub_test?replicaSet=rs' : 'mongodb://localhost:27017/tekpub_test';
+  const uri = 'mongodb://localhost:27017/tekpub_test';
+  const uriRS = 'mongodb://localhost:27017,localhost:27018,localhost:27019/tekpub_test?replicaSet=rs';
+  mongoose.connect(uriRS, { useNewUrlParser: true }).then(() => {
+    console.log('MongoDB connected');
+    mongoose.connection.db.admin().serverInfo().then((serverInfo) => {
+        const dbVersion = serverInfo.version;
+        if ( semver.gte(dbVersion, '4.0.0') ){
+            mongoose.startSession().then(_session => {
+                try {
+                    _session.startTransaction();
+                    _session.abortTransaction();
+                    session = _session;
+                    console.log('session supported');
+                } catch (e) {
+                    console.log(`session not supported ${e}`);
+                }
+            }).catch((e) => {
+                console.log(`session not supported ${e}`);
+                session = null;
+            });
+        } else {
+            console.log('MongoDB version < 4.0.0 transaction not supported.');
+        }
+    });
+  }).catch((e) => {
+    console.warn(`Unable to connect in replca mode - falling back normal - ${e}`);
+    mongoose.connect(uri, { useNewUrlParser: true }).then(() => {
+        console.log('MongoDB connected');
+    }).catch((e1) => {
+        console.error('mongoose-diff-history connection error:', e1);
+    });
   });
 }
 
@@ -458,15 +497,15 @@ describe('diffHistory', function () {
                 .then(() =>
                     Sample1.findOneAndUpdate(
                         { def: 'ipsum' },
-                        { ghi: 323, def: 'hey  hye' },
-                        { __user: 'Mimani', __reason: 'Mimani updated this also' }
+                        { $set: { ghi: 323, def: 'hey  hye' } },
+                        { __user: 'Mimani', __reason: 'Mimani updated this also', upsert: true }
                     )
                 )
                 .then(() => done())
                 .catch(done);
         });
 
-        it('should create a diff object when collections are updated via update', function (done) {
+        it('should create a diff object when collections are updated via update (with upsert option)', function (done) {
             History.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
@@ -668,7 +707,16 @@ describe('diffHistory', function () {
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(2);
                     expect(historyAudits[0].comment).equal('modified ghi, def');
-                    expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                    /* 
+                        it seems the sequence for v4 mongoose and v5 mongoose is different
+                        -modified abc, _id, def, ghi, __v
+                        +modified abc, __v, ghi, def, _id
+                    */ 
+                    if(mongoVersion < 5){
+                        expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                    } else {
+                        expect(historyAudits[1].comment).to.equal('modified abc, _id, def, ghi, __v');
+                    }
                     expect(historyAudits[1].changedAt).not.null;
                     expect(historyAudits[1].updatedAt).not.null;
                     done();
@@ -681,7 +729,16 @@ describe('diffHistory', function () {
                 expect(err).to.be.null;
                 expect(historyAudits.length).equal(2);
                 expect(historyAudits[0].comment).equal('modified ghi, def');
-                expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                /* 
+                    it seems the sequence for v4 mongoose and v5 mongoose is different
+                    -modified abc, _id, def, ghi, __v
+                    +modified abc, __v, ghi, def, _id
+                */ 
+                if(mongoVersion < 5){
+                    expect(historyAudits[1].comment).to.equal('modified abc, __v, ghi, def, _id');
+                } else {
+                    expect(historyAudits[1].comment).to.equal('modified abc, _id, def, ghi, __v');
+                }
                 expect(historyAudits[1].changedAt).not.null;
                 expect(historyAudits[1].updatedAt).not.null;
                 done();
@@ -805,7 +862,121 @@ describe('diffHistory', function () {
           done();
         });
       });
+    });
 
+    /* transaction test should be at the bottom of the script so that have time for the session check*/
+    describe('transaction', function () {
+        before(function() {
+            // check if session is available, if not skip all test.
+            if (!session) {
+              this.skip();
+            }
+        });
+        afterEach(function (done) {
+            Promise.all([
+                mongoose.connection.collections['samples'].remove({}),
+            ])
+                .then(() => done())
+                .catch(done);
+        });
+        describe('abort transaction with __session pass to history', function () {
+            beforeEach(function (done) {
+                session.startTransaction();
+                Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session })
+                .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session }))
+                .then(() => Sample1.findOneAndUpdate(
+                    { def: 'Test1'},
+                    { $set: {ghi: 3 } },
+                    { __user: 'Mimani', __reason: 'Mimani updated this also', session: session, __session: session }
+                    ))
+                .then(() => session.abortTransaction())
+                .then(() => done())
+                .catch(done);
+            });
+            it('it should rollback all document with abortTransaction', function (done) {
+                Sample1.find({}, function (err, doc) {
+                expect(err).to.null;
+                expect(doc.length).equal(0);
+                done();
+                });
+            });
+            it('it should rollback histories with abortTransaction', function (done) {
+                History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(0);
+                done();
+                });
+            });
+        });
+
+        describe('test abort transaction without __session pass to history', function () {
+            beforeEach(function (done) {
+                session.startTransaction();
+                Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session })
+                .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session }))
+                .then(() => Sample1.findOneAndUpdate(
+                    { def: 'Test1' }, 
+                    { $set: {ghi: 3 } }, 
+                    { __user: 'Mimani', __reason: 'Mimani updated this also', session: session /*, __session: session */ }
+                    ))
+                .then(() => session.abortTransaction())
+                .then(() => done())
+                .catch(done);
+            });
+            it('it should rollback all document with abortTransaction', function (done) {
+                Sample1.find({}, function (err, doc) {
+                expect(err).to.null;
+                expect(doc.length).equal(0);
+                done();
+                });
+            });
+            it('it should create histories even with abortTransaction called since no __session pass to history', function (done) {
+                History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(1);
+                expect(histories[0].diff.ghi[0]).equal(1);
+                expect(histories[0].diff.ghi[1]).equal(3);
+                expect(histories[0].reason).equal('Mimani updated this also');
+                expect(histories[0].collectionName).equal(Sample1.modelName);
+                expect(histories[0].collectionName).equal(Sample1.modelName);
+                done();
+                });
+            });
+        });
+
+        describe('test commit transaction with __session pass to history', function () {
+            beforeEach(function (done) {
+                session.startTransaction();
+                Sample1.create([{ def: 'Test1', ghi: 1 }], { session: session })
+                .then(() => Sample1.create([{ def: 'Test2', ghi: 2 }], { session: session }))
+                .then(() => Sample1.findOneAndUpdate(
+                    { def: 'Test1' }, 
+                    { $set: {ghi: 3 } }, 
+                    { __user: 'Mimani', __reason: 'Mimani updated this also', session: session, __session: session }))
+                .then(() => session.commitTransaction())
+                .then(() => done())
+                .catch(done);
+            });
+            it('it should create document with commitTransaction', function (done) {
+                Sample1.find({}, function (err, doc) {
+                expect(err).to.null;
+                expect(doc.length).equal(2);
+                done();
+                });
+            });
+            it('it should create histories with commitTransaction', function (done) {
+                History.find({}, function (err, histories) {
+                expect(err).to.null;
+                expect(histories.length).equal(1);
+                expect(histories[0].diff.ghi[0]).equal(1);
+                expect(histories[0].diff.ghi[1]).equal(3);
+                expect(histories[0].reason).equal('Mimani updated this also');
+                expect(histories[0].collectionName).equal(Sample1.modelName);
+                expect(histories[0].collectionName).equal(Sample1.modelName);
+                done();
+                });
+            });
+        });
     });
 });
 
@@ -828,3 +999,4 @@ describe('diffHistory URI Option', function () {
         expect(mongoose.connections[0].name).to.equal('customUri');
     });
 });
+
