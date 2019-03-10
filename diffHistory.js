@@ -63,7 +63,6 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
                 version: lastHistory ? lastHistory.version + 1 : 0
             });
             if (session) {
-                // console.log('history in transaction');
                 return history.save({ session });
             }
             return history.save();
