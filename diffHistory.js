@@ -94,7 +94,6 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
 const saveDiffs = (queryObject, opts) =>
     queryObject
         .find(queryObject._conditions)
-        .lean(false)
         .cursor()
         .eachAsync(result => saveDiffHistory(queryObject, result, opts));
 

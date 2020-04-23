@@ -530,6 +530,17 @@ describe('diffHistory', function () {
                 })
                 .catch(done);
         });
+
+        it('should not override lean option in original query', function (done) {
+            Sample1.findOneAndUpdate(
+                { def: 'hey  hye' },
+                { ghi: 1234 },
+                { lean: true }
+            ).then(updatedObj => {
+                expect(updatedObj).not.to.instanceOf(Sample1);
+                done();
+            }).catch(done);
+        });
     });
 
     describe('plugin: pre updateOne', function () {
