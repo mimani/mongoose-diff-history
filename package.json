@@ -1,59 +1,67 @@
 {
-  "name": "mongoose-diff-history",
-  "version": "1.6.1",
-  "description": "Manage Mongo Collection diff History and versions",
-  "main": "diffHistoryModel.js",
-  "directories": {
-    "test": "tests"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mimani/mongoose-diff-history"
-  },
-  "dependencies": {
-    "deep-empty-object": "^1.0.5",
-    "jsondiffpatch": "^0.1.38",
-    "lodash.pick": "^4.4.0",
-    "omit-deep": "git://github.com/izigibran/omit-deep.git#0.4.0",
-    "power-assign": "^0.2.10"
-  },
-  "devDependencies": {
-    "bluebird": "^3.5.1",
-    "chai": "^3.5.0",
-    "istanbul": "^0.4.5",
-    "mocha": "^2.5.3",
-    "mongoose": "^4.13.9"
-  },
-  "scripts": {
-    "test": "istanbul cover --report lcov  _mocha tests --recursive"
-  },
-  "contributors": [
-    {
-      "name": "Saurabh Mimani",
-      "email": "mimani.saurabh@gmail.com"
+    "name": "mongoose-diff-history",
+    "version": "1.6.1",
+    "description": "Manage Mongo Collection diff History and versions",
+    "main": "diffHistoryModel.js",
+    "directories": {
+        "test": "tests"
     },
-    {
-      "name": "Amith Prasad",
-      "email": "send2amith@gmail.com"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mimani/mongoose-diff-history"
     },
-    {
-      "name": "Zachary Rollyson",
-      "email": "me@zjr.io"
-    }
-  ],
-  "engines": {
-    "node": "*"
-  },
-  "keywords": [
-    "mongoose",
-    "audit",
-    "oplog",
-    "diff",
-    "history",
-    "versioning"
-  ],
-  "bugs": {
-    "url": "https://github.com/mimani/mongoose-diff-history/issues"
-  },
-  "license": "GPL-2.0"
+    "husky": {
+        "hooks": {
+            "pre-commit": "pretty-quick --staged"
+        }
+    },
+    "dependencies": {
+        "deep-empty-object": "^1.0.5",
+        "jsondiffpatch": "^0.1.38",
+        "lodash.pick": "^4.4.0",
+        "omit-deep": "git://github.com/izigibran/omit-deep.git#0.4.0",
+        "power-assign": "^0.2.10"
+    },
+    "devDependencies": {
+        "bluebird": "^3.5.1",
+        "chai": "^3.5.0",
+        "husky": "^4.2.5",
+        "istanbul": "^0.4.5",
+        "mocha": "^2.5.3",
+        "mongoose": "^4.13.9",
+        "prettier": "^2.0.5",
+        "pretty-quick": "^2.0.1"
+    },
+    "scripts": {
+        "test": "istanbul cover --report lcov  _mocha tests --recursive"
+    },
+    "contributors": [
+        {
+            "name": "Saurabh Mimani",
+            "email": "mimani.saurabh@gmail.com"
+        },
+        {
+            "name": "Amith Prasad",
+            "email": "send2amith@gmail.com"
+        },
+        {
+            "name": "Zachary Rollyson",
+            "email": "me@zjr.io"
+        }
+    ],
+    "engines": {
+        "node": "*"
+    },
+    "keywords": [
+        "mongoose",
+        "audit",
+        "oplog",
+        "diff",
+        "history",
+        "versioning"
+    ],
+    "bugs": {
+        "url": "https://github.com/mimani/mongoose-diff-history/issues"
+    },
+    "license": "GPL-2.0"
 }

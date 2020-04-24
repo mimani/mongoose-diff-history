@@ -1,8 +1,9 @@
+const mongoose = require('mongoose');
+
 const omit = require('omit-deep');
 const pick = require('lodash.pick');
-const mongoose = require('mongoose');
-const {assign} = require("power-assign");
-const empty =  require("deep-empty-object");
+const empty = require('deep-empty-object');
+const { assign } = require('power-assign');
 
 // try to find an id property, otherwise just use the index in the array
 const objectHash = (obj, idx) => obj._id || obj.id || `$$index: ${idx}`;
@@ -16,20 +17,24 @@ const isValidCb = cb => {
 
 //https://eslint.org/docs/rules/complexity#when-not-to-use-it
 /* eslint-disable complexity */
-function checkRequired(opts, queryObject, updatedObject){
-  if((queryObject &&!queryObject.options) && !updatedObject){
-    return;
-  }
-  const { __user: user, __reason: reason } = queryObject && queryObject.options || updatedObject;
-  if (opts.required && (opts.required.includes("user") && !user ||
-      opts.required.includes("reason") && !reason)
-  ){
-    return true;
-  }
+function checkRequired(opts, queryObject, updatedObject) {
+    if (queryObject && !queryObject.options && !updatedObject) {
+        return;
+    }
+    const { __user: user, __reason: reason } =
+        (queryObject && queryObject.options) || updatedObject;
+    if (
+        opts.required &&
+        ((opts.required.includes('user') && !user) ||
+            (opts.required.includes('reason') && !reason))
+    ) {
+        return true;
+    }
 }
 
 function saveDiffObject(currentObject, original, updated, opts, queryObject) {
-    const { __user: user, __reason: reason, __session: session } = queryObject && queryObject.options || currentObject;
+    const { __user: user, __reason: reason, __session: session } =
+        (queryObject && queryObject.options) || currentObject;
 
     let diff = diffPatcher.diff(
         JSON.parse(JSON.stringify(original)),
@@ -37,19 +42,20 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
     );
 
     if (opts.omit) {
-        omit(diff, opts.omit, {cleanEmpty: true});
+        omit(diff, opts.omit, { cleanEmpty: true });
     }
 
-    if (opts.pick){
+    if (opts.pick) {
         diff = pick(diff, opts.pick);
     }
 
     if (!diff || !Object.keys(diff).length || empty.all(diff)) {
-      return;
+        return;
     }
 
     const collectionId = currentObject._id;
-    const collectionName = currentObject.constructor.modelName || queryObject.model.modelName;
+    const collectionName =
+        currentObject.constructor.modelName || queryObject.model.modelName;
 
     return History.findOne({ collectionId, collectionName })
         .sort('-version')
@@ -68,27 +74,33 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
             return history.save();
         });
 }
+
 /* eslint-disable complexity */
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
-  const update = JSON.parse(JSON.stringify(queryObject._update));
-  /* eslint-disable security/detect-object-injection */
-  const updateParams = Object.assign(...Object.keys(update).map(function(key) {
-    if(typeof update[key] === "object") {
-      return update[key];
-    }
-    return update;
-  }));
-  /* eslint-enable security/detect-object-injection */
-  delete queryObject._update["$setOnInsert"];
-  const dbObject = pick(currentObject, Object.keys(updateParams));
-  return saveDiffObject(
-    currentObject,
-    dbObject,
-    assign(dbObject, queryObject._update),
-    opts,
-    queryObject
-  );
+    const update = JSON.parse(JSON.stringify(queryObject._update));
+
+    /* eslint-disable security/detect-object-injection */
+    const updateParams = Object.assign(
+        ...Object.keys(update).map(function (key) {
+            if (typeof update[key] === 'object') {
+                return update[key];
+            }
+            return update;
+        })
+    );
+
+    /* eslint-enable security/detect-object-injection */
+    delete queryObject['_update']['$setOnInsert'];
+    const dbObject = pick(currentObject, Object.keys(updateParams));
+
+    return saveDiffObject(
+        currentObject,
+        dbObject,
+        assign(dbObject, queryObject._update),
+        opts,
+        queryObject
+    );
 };
 
 const saveDiffs = (queryObject, opts) =>
@@ -139,7 +151,11 @@ const getDiffs = (modelName, id, opts, cb) => {
         cb = opts;
         opts = {};
     }
-    return History.find({ collectionName: modelName, collectionId: id }, null, opts)
+    return History.find(
+        { collectionName: modelName, collectionId: id },
+        null,
+        opts
+    )
         .lean()
         .then(histories => {
             if (isValidCb(cb)) return cb(null, histories);
@@ -171,13 +187,16 @@ const getHistories = (modelName, id, expandableFields, cb) => {
                     if (expandableFields.indexOf(key) > -1) {
                         const oldValue = history.diff[key][0];
                         const newValue = history.diff[key][1];
-                        changedValues.push(key + ' from ' + oldValue + ' to ' + newValue);
+                        changedValues.push(
+                            key + ' from ' + oldValue + ' to ' + newValue
+                        );
                     } else {
                         changedFields.push(key);
                     }
                 }
             }
-            const comment = 'modified ' + changedFields.concat(changedValues).join(', ');
+            const comment =
+                'modified ' + changedFields.concat(changedValues).join(', ');
             histories.push({
                 changedBy: history.user,
                 changedAt: history.createdAt,
@@ -205,14 +224,14 @@ const getHistories = (modelName, id, expandableFields, cb) => {
 const plugin = function lastModifiedPlugin(schema, opts = {}) {
     if (opts.uri) {
         const mongoVersion = parseInt(mongoose.version);
-        if(mongoVersion < 5){
-          mongoose.connect(opts.uri, { useMongoClient: true }).catch((e) => {
-            console.error('mongoose-diff-history connection error:', e);
-          });
+        if (mongoVersion < 5) {
+            mongoose.connect(opts.uri, { useMongoClient: true }).catch(e => {
+                console.error('mongoose-diff-history connection error:', e);
+            });
         } else {
-          mongoose.connect(opts.uri, { useNewUrlParser: true }).catch((e) => {
-            console.error('mongoose-diff-history connection error:', e);
-          });
+            mongoose.connect(opts.uri, { useNewUrlParser: true }).catch(e => {
+                console.error('mongoose-diff-history connection error:', e);
+            });
         }
     }
 
@@ -229,37 +248,52 @@ const plugin = function lastModifiedPlugin(schema, opts = {}) {
         if (this.isNew) return next();
         this.constructor
             .findOne({ _id: this._id })
-            .then((original) => {
-                 if(checkRequired(opts, {}, this)){ return;}
-                 return saveDiffObject(this, original, this.toObject({ depopulate: true }), opts);
+            .then(original => {
+                if (checkRequired(opts, {}, this)) {
+                    return;
+                }
+                return saveDiffObject(
+                    this,
+                    original,
+                    this.toObject({ depopulate: true }),
+                    opts
+                );
             })
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('findOneAndUpdate', function (next) {
-      if (checkRequired(opts,this)) {return next();}
+        if (checkRequired(opts, this)) {
+            return next();
+        }
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('update', function (next) {
-      if (checkRequired(opts,this)) {return next();}
+        if (checkRequired(opts, this)) {
+            return next();
+        }
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('updateOne', function (next) {
-      if (checkRequired(opts,this)) {return next();}
+        if (checkRequired(opts, this)) {
+            return next();
+        }
         saveDiffs(this, opts)
             .then(() => next())
             .catch(next);
     });
 
     schema.pre('remove', function (next) {
-      if (checkRequired(opts,this)) {return next();}
+        if (checkRequired(opts, this)) {
+            return next();
+        }
         saveDiffObject(this, this, {}, opts)
             .then(() => next())
             .catch(next);
