@@ -573,7 +573,13 @@ describe('diffHistory', function () {
                 .then(() =>
                     Sample1.findOneAndUpdate(
                         { def: 'ipsum' },
-                        { $set: { ghi: 323, def: 'hey  hye' } },
+                        {
+                            $set: {
+                                ghi: 323,
+                                def: 'hey  hye',
+                                unknownKey: 'someBigObject'
+                            }
+                        },
                         {
                             __user: 'Mimani',
                             __reason: 'Mimani updated this also',
@@ -638,6 +644,18 @@ describe('diffHistory', function () {
                         done(e);
                     })
             );
+        });
+
+        it('should omit unknown/invalid keys in diff', function (done) {
+            Sample1.findById(sample1._id).then(sample => {
+                expect(sample.unknownKey).to.undefined;
+                History.find({}, function (err, histories) {
+                    expect(err).to.null;
+                    expect(histories.length).equal(1);
+                    expect(histories[0].diff.unknownKey).to.undefined;
+                    done();
+                });
+            });
         });
     });
 

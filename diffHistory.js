@@ -99,6 +99,7 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
     }
 
     const dbObject = pick(currentObject, keysToBeModified);
+    const validPaths = Object.keys(queryObject.model.schema.paths);
     const updatedObject = assign(
         dbObject,
         pick(queryUpdate, mongoUpdateOperations),
@@ -108,7 +109,7 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
     return saveDiffObject(
         currentObject,
         dbObject,
-        updatedObject,
+        pick(updatedObject, validPaths),
         opts,
         queryObject
     );
