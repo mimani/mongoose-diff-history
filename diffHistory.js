@@ -79,17 +79,17 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
     const queryUpdate = queryObject.getUpdate();
-  
+
     let keysToBeModified = [];
     let mongoUpdateOperations = [];
     let plainKeys = [];
-  
+
     for (const key in queryUpdate) {
         const value = queryUpdate[key];
-        if (key.startsWith("$") && typeof value === "object") {
+        if (key.startsWith('$') && typeof value === 'object') {
             const innerKeys = Object.keys(value);
             keysToBeModified = keysToBeModified.concat(innerKeys);
-            if (key !== "$setOnInsert") {
+            if (key !== '$setOnInsert') {
                 mongoUpdateOperations = mongoUpdateOperations.concat(key);
             }
         } else {
@@ -97,14 +97,14 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
             plainKeys = plainKeys.concat(key);
         }
     }
-  
+
     const dbObject = pick(currentObject, keysToBeModified);
     const updatedObject = assign(
         dbObject,
         pick(queryUpdate, mongoUpdateOperations),
         pick(queryUpdate, plainKeys)
     );
-  
+
     return saveDiffObject(
         currentObject,
         dbObject,

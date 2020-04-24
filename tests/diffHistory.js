@@ -116,13 +116,12 @@ mandatorySchema.plugin(diffHistory.plugin, { required: ['user', 'reason'] });
 
 const MandatorySchema = mongoose.model('mandatories', mandatorySchema);
 
-
 const schemaWithTimestamps = new mongoose.Schema(
     {
-      def: String
+        def: String
     },
     { timestamps: true }
-  );
+);
 schemaWithTimestamps.plugin(diffHistory.plugin);
 const TimestampsSchema = mongoose.model('timestamps', schemaWithTimestamps);
 
@@ -619,24 +618,26 @@ describe('diffHistory', function () {
                 { def: 'hey  hye' },
                 { ghi: 1234 },
                 { lean: true }
-            ).then(updatedObj => {
-                expect(updatedObj).not.to.instanceOf(Sample1);
-                done();
-            }).catch(done);
+            )
+                .then(updatedObj => {
+                    expect(updatedObj).not.to.instanceOf(Sample1);
+                    done();
+                })
+                .catch(done);
         });
 
-        it("should not fail if timestamps enabled", function (done) {
-          const timestampModel = new TimestampsSchema({ def: "hello" });
-          timestampModel.save().then(() =>
-            TimestampsSchema.findOneAndUpdate(
-              { def: "hello" },
-              { def: "update hello" }
-            )
-              .then(() => done())
-              .catch((e) => {
-                done(e);
-              })
-          );
+        it('should not fail if timestamps enabled', function (done) {
+            const timestampModel = new TimestampsSchema({ def: 'hello' });
+            timestampModel.save().then(() =>
+                TimestampsSchema.findOneAndUpdate(
+                    { def: 'hello' },
+                    { def: 'update hello' }
+                )
+                    .then(() => done())
+                    .catch(e => {
+                        done(e);
+                    })
+            );
         });
     });
 
