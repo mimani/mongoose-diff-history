@@ -78,26 +78,37 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
 /* eslint-disable complexity */
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
-    const update = JSON.parse(JSON.stringify(queryObject._update));
-
-    /* eslint-disable security/detect-object-injection */
-    const updateParams = Object.assign(
-        ...Object.keys(update).map(function (key) {
-            if (typeof update[key] === 'object') {
-                return update[key];
+    const queryUpdate = queryObject.getUpdate();
+  
+    let keysToBeModified = [];
+    let mongoUpdateOperations = [];
+    let plainKeys = [];
+  
+    for (const key in queryUpdate) {
+        const value = queryUpdate[key];
+        if (key.startsWith("$") && typeof value === "object") {
+            const innerKeys = Object.keys(value);
+            keysToBeModified = keysToBeModified.concat(innerKeys);
+            if (key !== "$setOnInsert") {
+                mongoUpdateOperations = mongoUpdateOperations.concat(key);
             }
-            return update;
-        })
+        } else {
+            keysToBeModified = keysToBeModified.concat(key);
+            plainKeys = plainKeys.concat(key);
+        }
+    }
+  
+    const dbObject = pick(currentObject, keysToBeModified);
+    const updatedObject = assign(
+        dbObject,
+        pick(queryUpdate, mongoUpdateOperations),
+        pick(queryUpdate, plainKeys)
     );
-
-    /* eslint-enable security/detect-object-injection */
-    delete queryObject['_update']['$setOnInsert'];
-    const dbObject = pick(currentObject, Object.keys(updateParams));
-
+  
     return saveDiffObject(
         currentObject,
         dbObject,
-        assign(dbObject, queryObject._update),
+        updatedObject,
         opts,
         queryObject
     );
@@ -106,7 +117,6 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
 const saveDiffs = (queryObject, opts) =>
     queryObject
         .find(queryObject._conditions)
-        .lean(false)
         .cursor()
         .eachAsync(result => saveDiffHistory(queryObject, result, opts));
 
