@@ -116,15 +116,25 @@ mandatorySchema.plugin(diffHistory.plugin, { required: ['user', 'reason'] });
 
 const MandatorySchema = mongoose.model('mandatories', mandatorySchema);
 
-
 const schemaWithTimestamps = new mongoose.Schema(
     {
-      def: String
+        def: String
     },
     { timestamps: true }
-  );
+);
 schemaWithTimestamps.plugin(diffHistory.plugin);
 const TimestampsSchema = mongoose.model('timestamps', schemaWithTimestamps);
+
+const schemaStrictDisabled = new mongoose.Schema(
+    {
+        key1: String
+    },
+    { strict: false }
+);
+schemaStrictDisabled.plugin(diffHistory.plugin);
+const StrictDisabled = mongoose.model('strictdisables', schemaStrictDisabled);
+
+const seedStrictMode = key1 => new StrictDisabled({ key1 }).save();
 
 describe('diffHistory', function () {
     afterEach(function (done) {
@@ -134,7 +144,8 @@ describe('diffHistory', function () {
             mongoose.connection.collections['samplesarrays'].remove({}),
             mongoose.connection.collections['histories'].remove({}),
             mongoose.connection.collections['mandatories'].remove({}),
-            mongoose.connection.collections['timestamps'].remove({})
+            mongoose.connection.collections['timestamps'].remove({}),
+            mongoose.connection.collections['strictdisables'].remove({})
         ])
             .then(() => done())
             .catch(done);
@@ -574,7 +585,13 @@ describe('diffHistory', function () {
                 .then(() =>
                     Sample1.findOneAndUpdate(
                         { def: 'ipsum' },
-                        { $set: { ghi: 323, def: 'hey  hye' } },
+                        {
+                            $set: {
+                                ghi: 323,
+                                def: 'hey  hye',
+                                unknownKey: 'someBigObject'
+                            }
+                        },
                         {
                             __user: 'Mimani',
                             __reason: 'Mimani updated this also',
@@ -619,24 +636,78 @@ describe('diffHistory', function () {
                 { def: 'hey  hye' },
                 { ghi: 1234 },
                 { lean: true }
-            ).then(updatedObj => {
-                expect(updatedObj).not.to.instanceOf(Sample1);
-                done();
-            }).catch(done);
+            )
+                .then(updatedObj => {
+                    expect(updatedObj).not.to.instanceOf(Sample1);
+                    done();
+                })
+                .catch(done);
         });
 
-        it("should not fail if timestamps enabled", function (done) {
-          const timestampModel = new TimestampsSchema({ def: "hello" });
-          timestampModel.save().then(() =>
-            TimestampsSchema.findOneAndUpdate(
-              { def: "hello" },
-              { def: "update hello" }
+        it('should not fail if timestamps enabled', function (done) {
+            const timestampModel = new TimestampsSchema({ def: 'hello' });
+            timestampModel.save().then(() =>
+                TimestampsSchema.findOneAndUpdate(
+                    { def: 'hello' },
+                    { def: 'update hello' }
+                )
+                    .then(() => done())
+                    .catch(e => {
+                        done(e);
+                    })
+            );
+        });
+
+        it('should omit unknown keys in diff if strict mode enabled', function (done) {
+            Sample1.findById(sample1._id).then(sample => {
+                expect(sample.unknownKey).to.undefined;
+                History.find({}, function (err, histories) {
+                    expect(err).to.null;
+                    expect(histories.length).equal(1);
+                    expect(histories[0].diff.unknownKey).to.undefined;
+                    done();
+                });
+            });
+        });
+
+        it('should allow unknown keys if strict mode disabled', function (done) {
+            Sample1.findOneAndUpdate(
+                { def: 'hey  hye' },
+                { ghi: 1234, unknownKey: 'someVal' },
+                { new: true, lean: true, strict: false }
             )
-              .then(() => done())
-              .catch((e) => {
-                done(e);
-              })
-          );
+                .then(sample => {
+                    expect(sample.unknownKey).to.equal('someVal');
+                })
+                .then(() =>
+                    History.find({}).then(histories => {
+                        expect(histories[1].diff.unknownKey[0]).to.equal(
+                            'someVal'
+                        );
+                        done();
+                    })
+                )
+                .catch(done);
+        });
+
+        it('should allow unknown keys in diff if strict mode disabled in model schema', function (done) {
+            seedStrictMode('someVal')
+                .then(() => {
+                    return StrictDisabled.findOneAndUpdate(
+                        { key1: 'someVal' },
+                        { unknownKey: 'big' },
+                        { new: true }
+                    );
+                })
+                .then(sample => {
+                    expect(sample.toObject().unknownKey).to.equal('big');
+                    return History.find({}, function (err, histories) {
+                        expect(err).to.null;
+                        expect(histories[1].diff.unknownKey[0]).to.equal('big');
+                        done();
+                    });
+                })
+                .catch(done);
         });
     });
 

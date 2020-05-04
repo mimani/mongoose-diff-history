@@ -79,17 +79,18 @@ function saveDiffObject(currentObject, original, updated, opts, queryObject) {
 
 const saveDiffHistory = (queryObject, currentObject, opts) => {
     const queryUpdate = queryObject.getUpdate();
-  
+    const schemaOptions = queryObject.model.schema.options || {};
+
     let keysToBeModified = [];
     let mongoUpdateOperations = [];
     let plainKeys = [];
-  
+
     for (const key in queryUpdate) {
         const value = queryUpdate[key];
-        if (key.startsWith("$") && typeof value === "object") {
+        if (key.startsWith('$') && typeof value === 'object') {
             const innerKeys = Object.keys(value);
             keysToBeModified = keysToBeModified.concat(innerKeys);
-            if (key !== "$setOnInsert") {
+            if (key !== '$setOnInsert') {
                 mongoUpdateOperations = mongoUpdateOperations.concat(key);
             }
         } else {
@@ -97,14 +98,23 @@ const saveDiffHistory = (queryObject, currentObject, opts) => {
             plainKeys = plainKeys.concat(key);
         }
     }
-  
+
     const dbObject = pick(currentObject, keysToBeModified);
-    const updatedObject = assign(
+    let updatedObject = assign(
         dbObject,
         pick(queryUpdate, mongoUpdateOperations),
         pick(queryUpdate, plainKeys)
     );
-  
+
+    let { strict } = queryObject.options || {};
+    // strict in Query options can override schema option
+    strict = strict !== undefined ? strict : schemaOptions.strict;
+
+    if (strict === true) {
+        const validPaths = Object.keys(queryObject.model.schema.paths);
+        updatedObject = pick(updatedObject, validPaths);
+    }
+
     return saveDiffObject(
         currentObject,
         dbObject,
