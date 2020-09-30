@@ -8,7 +8,7 @@ const historySchema = new Schema(
         diff: {},
         user: {},
         reason: String,
-        version: { type: Number, min: 0 }
+        version: { type: Number, min: 0, index: true }
     },
     {
         timestamps: true
