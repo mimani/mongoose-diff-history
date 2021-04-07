@@ -5,7 +5,6 @@ const mongoose = require('mongoose');
 const diffPatch = require('jsondiffpatch').create();
 
 const diffHistory = require('../diffHistory');
-const History = require('../diffHistoryModel').model;
 const semver = require('semver');
 mongoose.Promise = Promise;
 
@@ -85,7 +84,10 @@ const sampleSchema1 = new mongoose.Schema({
     ghi: Number,
     ignored: String
 });
-sampleSchema1.plugin(diffHistory.plugin, { omit: ['ignored'] });
+sampleSchema1.plugin(diffHistory.plugin, {
+    name: 'history1',
+    omit: ['ignored']
+});
 const Sample1 = mongoose.model('samples', sampleSchema1);
 
 const sampleSchemaWithArray = new mongoose.Schema({
@@ -94,7 +96,7 @@ const sampleSchemaWithArray = new mongoose.Schema({
     things: []
 });
 
-sampleSchemaWithArray.plugin(diffHistory.plugin);
+sampleSchemaWithArray.plugin(diffHistory.plugin, { name: 'history2' });
 const SampleArray = mongoose.model('samplesArray', sampleSchemaWithArray);
 
 const pickSchema = new mongoose.Schema({
@@ -102,7 +104,7 @@ const pickSchema = new mongoose.Schema({
     ghi: Number,
     pickOnly: String
 });
-pickSchema.plugin(diffHistory.plugin, { pick: ['pickOnly'] });
+pickSchema.plugin(diffHistory.plugin, { name: 'history3', pick: ['pickOnly'] });
 
 const PickSchema = mongoose.model('picks', pickSchema);
 
@@ -112,7 +114,10 @@ const mandatorySchema = new mongoose.Schema({
     someNumber: Number,
     someString: String
 });
-mandatorySchema.plugin(diffHistory.plugin, { required: ['user', 'reason'] });
+mandatorySchema.plugin(diffHistory.plugin, {
+    name: 'history4',
+    required: ['user', 'reason']
+});
 
 const MandatorySchema = mongoose.model('mandatories', mandatorySchema);
 
@@ -122,7 +127,7 @@ const schemaWithTimestamps = new mongoose.Schema(
     },
     { timestamps: true }
 );
-schemaWithTimestamps.plugin(diffHistory.plugin);
+schemaWithTimestamps.plugin(diffHistory.plugin, { name: 'history5' });
 const TimestampsSchema = mongoose.model('timestamps', schemaWithTimestamps);
 
 const schemaStrictDisabled = new mongoose.Schema(
@@ -131,7 +136,7 @@ const schemaStrictDisabled = new mongoose.Schema(
     },
     { strict: false }
 );
-schemaStrictDisabled.plugin(diffHistory.plugin);
+schemaStrictDisabled.plugin(diffHistory.plugin, { name: 'history6' });
 const StrictDisabled = mongoose.model('strictdisables', schemaStrictDisabled);
 
 const seedStrictMode = key1 => new StrictDisabled({ key1 }).save();
@@ -142,7 +147,11 @@ describe('diffHistory', function () {
             mongoose.connection.collections['samples'].remove({}),
             mongoose.connection.collections['picks'].remove({}),
             mongoose.connection.collections['samplesarrays'].remove({}),
-            mongoose.connection.collections['histories'].remove({}),
+            mongoose.connection.collections['history1'].remove({}),
+            mongoose.connection.collections['history2'].remove({}),
+            mongoose.connection.collections['history3'].remove({}),
+            mongoose.connection.collections['history4'].remove({}),
+            mongoose.connection.collections['history5'].remove({}),
             mongoose.connection.collections['mandatories'].remove({}),
             mongoose.connection.collections['timestamps'].remove({}),
             mongoose.connection.collections['strictdisables'].remove({})
@@ -182,8 +191,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 0', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 0, { lean: true })
+            Sample1.getVersion(sample1._id, 0, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample).to.deep.equal(sampleV1);
@@ -193,8 +201,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 1', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 1, { lean: true })
+            Sample1.getVersion(sample1._id, 1, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample).to.deep.equal(sampleV2);
@@ -204,8 +211,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 2', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 2, { lean: true })
+            Sample1.getVersion(sample1._id, 2, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample).to.deep.equal(sampleV3);
@@ -215,8 +221,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 3', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 3, { lean: true })
+            Sample1.getVersion(sample1._id, 3, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample).to.deep.equal(sampleV4);
@@ -227,8 +232,7 @@ describe('diffHistory', function () {
 
         //TODO: this is test case when version is greater than created in DB, as of now returning the latest object for this case
         it('should return correct version for version 4', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 3, { lean: true })
+            Sample1.getVersion(sample1._id, 3, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample).to.deep.equal(sampleV4);
@@ -238,22 +242,16 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 0 using callback', function (done) {
-            diffHistory.getVersion(
-                Sample1,
-                sample1._id,
-                0,
-                (err, oldSample) => {
-                    expect(err).to.be.null;
-                    expect(oldSample).to.be.an('object');
-                    expect(oldSample.toObject()).to.deep.equal(sampleV1);
-                    done();
-                }
-            );
+            Sample1.getVersion(sample1._id, 0, (err, oldSample) => {
+                expect(err).to.be.null;
+                expect(oldSample).to.be.an('object');
+                expect(oldSample.toObject()).to.deep.equal(sampleV1);
+                done();
+            });
         });
 
         it('should return correct version for version 0 using callback and opts', function (done) {
-            diffHistory.getVersion(
-                Sample1,
+            Sample1.getVersion(
                 sample1._id,
                 0,
                 { lean: true },
@@ -267,7 +265,7 @@ describe('diffHistory', function () {
         });
 
         it('should return an error when calling without id', function (done) {
-            diffHistory.getVersion(Sample1, '', 0, (err, oldSample) => {
+            Sample1.getVersion('', 0, (err, oldSample) => {
                 expect(oldSample).to.be.null;
                 expect(err).to.be.an('object');
                 expect(err.name).to.equal('CastError');
@@ -304,8 +302,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 0, with unchanged omission', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 0, { lean: true })
+            Sample1.getVersion(sample1._id, 0, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample.def).to.equal(sampleV0.def);
@@ -316,8 +313,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 1, with unchanged omission', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 1, { lean: true })
+            Sample1.getVersion(sample1._id, 1, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample.def).to.equal(sampleV1.def);
@@ -328,8 +324,7 @@ describe('diffHistory', function () {
         });
 
         it('should return correct version for version 2, with unchanged omission', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 2, { lean: true })
+            Sample1.getVersion(sample1._id, 2, { lean: true })
                 .then(oldSample => {
                     expect(oldSample).to.be.an('object');
                     expect(oldSample.def).to.equal(sampleV2.def);
@@ -363,7 +358,7 @@ describe('diffHistory', function () {
         });
 
         it('should only create stories with the picked field', function (done) {
-            History.find({}, function (err, histories) {
+            PickSchema.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
                 expect(histories[0].diff.pickOnly[0]).equal('original');
@@ -397,7 +392,7 @@ describe('diffHistory', function () {
         });
 
         it('should create a diff object when collection is saved', function (done) {
-            History.find({ collectionId: sample1._id }, function (
+            Sample1.history.find({ collectionId: sample1._id }, function (
                 err,
                 histories
             ) {
@@ -417,8 +412,7 @@ describe('diffHistory', function () {
         });
 
         it('should return histories', function (done) {
-            diffHistory
-                .getHistories(Sample1.modelName, sample1._id, [])
+            Sample1.getHistories(sample1._id, [])
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(1);
                     expect(historyAudits[0].comment).equal('modified def');
@@ -428,32 +422,22 @@ describe('diffHistory', function () {
         });
 
         it('should return histories using callback', function (done) {
-            diffHistory.getHistories(
-                Sample1.modelName,
-                sample1._id,
-                [],
-                (err, historyAudits) => {
-                    expect(err).to.be.null;
-                    expect(historyAudits.length).equal(1);
-                    expect(historyAudits[0].comment).equal('modified def');
-                    done();
-                }
-            );
+            Sample1.getHistories(sample1._id, [], (err, historyAudits) => {
+                expect(err).to.be.null;
+                expect(historyAudits.length).equal(1);
+                expect(historyAudits[0].comment).equal('modified def');
+                done();
+            });
         });
 
         it('should throw an error if trying to get histories without an id', function (done) {
-            diffHistory.getHistories(
-                Sample1.modelName,
-                '',
-                [],
-                (err, historyAudits) => {
-                    expect(historyAudits).to.be.null;
-                    expect(err).to.be.an('object');
-                    expect(err.name).to.equal('CastError');
-                    expect(err.path).to.equal('collectionId');
-                    done();
-                }
-            );
+            Sample1.getHistories('', [], (err, historyAudits) => {
+                expect(historyAudits).to.be.null;
+                expect(err).to.be.an('object');
+                expect(err.name).to.equal('CastError');
+                expect(err.path).to.equal('collectionId');
+                done();
+            });
         });
     });
 
@@ -483,7 +467,7 @@ describe('diffHistory', function () {
         });
 
         it('should create a diff object when collections are updated via update', function (done) {
-            History.find({}, function (err, histories) {
+            Sample1.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(2);
                 expect(histories[0].diff.ghi[0]).equal(123);
@@ -501,8 +485,7 @@ describe('diffHistory', function () {
         });
 
         it('should return histories', function (done) {
-            diffHistory
-                .getHistories(Sample1.modelName, sample1._id, ['ghi'])
+            Sample1.getHistories(sample1._id, ['ghi'])
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(1);
                     expect(historyAudits[0].comment).equal(
@@ -545,7 +528,7 @@ describe('diffHistory', function () {
         });
 
         it('should create a diff object when collections are updated via update', function (done) {
-            History.find({}, function (err, histories) {
+            SampleArray.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
                 expect(histories[0].diff.items['2'][0].type).equal('three');
@@ -604,7 +587,7 @@ describe('diffHistory', function () {
         });
 
         it('should create a diff object when collections are updated via update (with upsert option)', function (done) {
-            History.find({}, function (err, histories) {
+            Sample1.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
                 expect(histories[0].diff.ghi[0]).equal(123);
@@ -619,8 +602,7 @@ describe('diffHistory', function () {
         });
 
         it('should return histories', function (done) {
-            diffHistory
-                .getHistories(Sample1.modelName, sample1._id, ['ghi'])
+            Sample1.getHistories(sample1._id, ['ghi'])
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(1);
                     expect(historyAudits[0].comment).equal(
@@ -661,7 +643,7 @@ describe('diffHistory', function () {
         it('should omit unknown keys in diff if strict mode enabled', function (done) {
             Sample1.findById(sample1._id).then(sample => {
                 expect(sample.unknownKey).to.undefined;
-                History.find({}, function (err, histories) {
+                Sample1.history.find({}, function (err, histories) {
                     expect(err).to.null;
                     expect(histories.length).equal(1);
                     expect(histories[0].diff.unknownKey).to.undefined;
@@ -680,7 +662,7 @@ describe('diffHistory', function () {
                     expect(sample.unknownKey).to.equal('someVal');
                 })
                 .then(() =>
-                    History.find({}).then(histories => {
+                    Sample1.history.find({}).then(histories => {
                         expect(histories[1].diff.unknownKey[0]).to.equal(
                             'someVal'
                         );
@@ -701,7 +683,10 @@ describe('diffHistory', function () {
                 })
                 .then(sample => {
                     expect(sample.toObject().unknownKey).to.equal('big');
-                    return History.find({}, function (err, histories) {
+                    return StrictDisabled.history.find({}, function (
+                        err,
+                        histories
+                    ) {
                         expect(err).to.null;
                         expect(histories[1].diff.unknownKey[0]).to.equal('big');
                         done();
@@ -732,7 +717,7 @@ describe('diffHistory', function () {
         });
 
         it('should create a diff object when collections are updated via updateOne', function (done) {
-            History.find({}, function (err, histories) {
+            Sample1.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
                 expect(histories[0].diff.ghi[0]).equal(123);
@@ -749,8 +734,7 @@ describe('diffHistory', function () {
         });
 
         it('should return histories', function (done) {
-            diffHistory
-                .getHistories(Sample1.modelName, sample1._id, ['ghi'])
+            Sample1.getHistories(sample1._id, ['ghi'])
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(1);
                     expect(historyAudits[0].comment).equal(
@@ -790,7 +774,7 @@ describe('diffHistory', function () {
         });
 
         it('should create a diff object when collections are updated via update', function (done) {
-            History.find({}, function (err, histories) {
+            Sample1.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(2);
                 expect(histories[0].diff.ghi[0]).equal(123);
@@ -815,8 +799,7 @@ describe('diffHistory', function () {
         });
 
         it('should return simple diffs', function (done) {
-            diffHistory
-                .getDiffs(Sample1.modelName, sample1._id)
+            Sample1.getDiffs(sample1._id)
                 .then(diffs => {
                     expect(diffs.length).to.equal(2);
                     expect(diffs[0]).to.be.an('object');
@@ -832,10 +815,9 @@ describe('diffHistory', function () {
         });
 
         it('should return simple diffs with opts', function (done) {
-            diffHistory
-                .getDiffs(Sample1.modelName, sample1._id, {
-                    select: 'diff user'
-                })
+            Sample1.getDiffs(sample1._id, {
+                select: 'diff user'
+            })
                 .then(diffs => {
                     expect(diffs.length).to.equal(2);
                     expect(diffs[0]).to.be.an('object');
@@ -851,8 +833,7 @@ describe('diffHistory', function () {
         });
 
         it('should return simple diffs with callback and opts', function (done) {
-            diffHistory.getDiffs(
-                Sample1.modelName,
+            Sample1.getDiffs(
                 sample1._id,
                 { select: 'diff user' },
                 (err, diffs) => {
@@ -871,27 +852,22 @@ describe('diffHistory', function () {
         });
 
         it('should return simple diffs with callback and no opts', function (done) {
-            diffHistory.getDiffs(
-                Sample1.modelName,
-                sample1._id,
-                (err, diffs) => {
-                    expect(err).to.be.null;
-                    expect(diffs.length).to.equal(2);
-                    expect(diffs[0]).to.be.an('object');
-                    expect(diffs[0].diff).to.be.an('object');
-                    expect(diffs[0].diff.def).to.be.an('array');
-                    expect(diffs[0].diff.def.length).to.equal(2);
-                    expect(diffs[0].diff.def[0]).to.equal('ipsum');
-                    expect(diffs[0].diff.def[1]).to.equal('hey  hye');
-                    expect(diffs[0].collectionName).to.be.equal('samples');
-                    done();
-                }
-            );
+            Sample1.getDiffs(sample1._id, (err, diffs) => {
+                expect(err).to.be.null;
+                expect(diffs.length).to.equal(2);
+                expect(diffs[0]).to.be.an('object');
+                expect(diffs[0].diff).to.be.an('object');
+                expect(diffs[0].diff.def).to.be.an('array');
+                expect(diffs[0].diff.def.length).to.equal(2);
+                expect(diffs[0].diff.def[0]).to.equal('ipsum');
+                expect(diffs[0].diff.def[1]).to.equal('hey  hye');
+                expect(diffs[0].collectionName).to.be.equal('samples');
+                done();
+            });
         });
 
         it('should return histories', function (done) {
-            diffHistory
-                .getHistories(Sample1.modelName, sample1._id, ['ghi'])
+            Sample1.getHistories(sample1._id, ['ghi'])
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(2);
                     expect(historyAudits[0].comment).equal(
@@ -910,8 +886,7 @@ describe('diffHistory', function () {
         });
 
         it('should return histories without expandableFields', function (done) {
-            diffHistory
-                .getHistories(Sample1.modelName, sample1._id)
+            Sample1.getHistories(sample1._id)
                 .then(historyAudits => {
                     expect(historyAudits.length).equal(2);
                     expect(historyAudits[0].comment).equal('modified ghi, def');
@@ -937,37 +912,32 @@ describe('diffHistory', function () {
         });
 
         it('should return histories without expandableFields and with callback', function (done) {
-            diffHistory.getHistories(
-                Sample1.modelName,
-                sample1._id,
-                (err, historyAudits) => {
-                    expect(err).to.be.null;
-                    expect(historyAudits.length).equal(2);
-                    expect(historyAudits[0].comment).equal('modified ghi, def');
-                    /*
+            Sample1.getHistories(sample1._id, (err, historyAudits) => {
+                expect(err).to.be.null;
+                expect(historyAudits.length).equal(2);
+                expect(historyAudits[0].comment).equal('modified ghi, def');
+                /*
                     it seems the sequence for v4 mongoose and v5 mongoose is different
                     -modified abc, _id, def, ghi, __v
                     +modified abc, __v, ghi, def, _id
                 */
-                    if (mongoVersion < 5) {
-                        expect(historyAudits[1].comment).to.equal(
-                            'modified abc, __v, ghi, def, _id'
-                        );
-                    } else {
-                        expect(historyAudits[1].comment).to.equal(
-                            'modified abc, _id, def, ghi, __v'
-                        );
-                    }
-                    expect(historyAudits[1].changedAt).not.null;
-                    expect(historyAudits[1].updatedAt).not.null;
-                    done();
+                if (mongoVersion < 5) {
+                    expect(historyAudits[1].comment).to.equal(
+                        'modified abc, __v, ghi, def, _id'
+                    );
+                } else {
+                    expect(historyAudits[1].comment).to.equal(
+                        'modified abc, _id, def, ghi, __v'
+                    );
                 }
-            );
+                expect(historyAudits[1].changedAt).not.null;
+                expect(historyAudits[1].updatedAt).not.null;
+                done();
+            });
         });
 
         it('should get version after object is removed', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 1)
+            Sample1.getVersion(sample1._id, 1)
                 .then(oldObject => {
                     expect(sample2).deep.equal(oldObject);
                     done();
@@ -976,8 +946,7 @@ describe('diffHistory', function () {
         });
 
         it('should get latest version after object is removed', function (done) {
-            diffHistory
-                .getVersion(Sample1, sample1._id, 2, { lean: true })
+            Sample1.getVersion(sample1._id, 2, { lean: true })
                 .then(oldObject => {
                     expect({}).deep.equal(oldObject);
                     done();
@@ -1031,7 +1000,7 @@ describe('diffHistory', function () {
         });
 
         it('should assign correct version to diff history', function (done) {
-            History.findOne({ collectionId: sample2._id }, function (
+            Sample1.history.findOne({ collectionId: sample2._id }, function (
                 err,
                 history
             ) {
@@ -1061,7 +1030,7 @@ describe('diffHistory', function () {
         });
 
         it('it should not create histories', function (done) {
-            History.find({}, function (err, histories) {
+            MandatorySchema.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(0);
                 done();
@@ -1089,7 +1058,7 @@ describe('diffHistory', function () {
         });
 
         it('it should create histories', function (done) {
-            History.find({}, function (err, histories) {
+            MandatorySchema.history.find({}, function (err, histories) {
                 expect(err).to.null;
                 expect(histories.length).equal(1);
                 expect(histories[0].diff.someString[0]).equal('string');
@@ -1149,7 +1118,7 @@ describe('diffHistory', function () {
                 });
             });
             it('it should rollback histories with abortTransaction', function (done) {
-                History.find({}, function (err, histories) {
+                Sample1.history.find({}, function (err, histories) {
                     expect(err).to.null;
                     expect(histories.length).equal(0);
                     done();
@@ -1189,7 +1158,7 @@ describe('diffHistory', function () {
                 });
             });
             it('it should create histories even with abortTransaction called since no __session pass to history', function (done) {
-                History.find({}, function (err, histories) {
+                Sample1.history.find({}, function (err, histories) {
                     expect(err).to.null;
                     expect(histories.length).equal(1);
                     expect(histories[0].diff.ghi[0]).equal(1);
@@ -1241,7 +1210,7 @@ describe('diffHistory', function () {
                 });
             });
             it('it should create histories with commitTransaction', function (done) {
-                History.find({}, function (err, histories) {
+                Sample1.history.find({}, function (err, histories) {
                     expect(err).to.null;
                     expect(histories.length).equal(1);
                     expect(histories[0].diff.ghi[0]).equal(1);
@@ -1266,7 +1235,7 @@ describe('diffHistory Error', function () {
     it('should throw an error when given an omit option not string or array', function () {
         const errSchema = new mongoose.Schema({ a: String });
         expect(() =>
-            errSchema.plugin(diffHistory.plugin, { omit: true })
+            errSchema.plugin(diffHistory.plugin, { name: 'error', omit: true })
         ).to.throw(
             TypeError,
             "opts.omit expects string or array, instead got 'boolean'"
@@ -1278,6 +1247,7 @@ describe('diffHistory URI Option', function () {
     it('should connect to DB at optional URI', function () {
         const testSchema = new mongoose.Schema({ a: String });
         testSchema.plugin(diffHistory.plugin, {
+            name: 'uri',
             uri: 'mongodb://localhost/customUri'
         });
         expect(mongoose.connections).to.be.an('array');
