@@ -30,7 +30,6 @@ diff Collection schema:
 
 ```
 _id : mongo id of the diff object
-collectionName: Name of the collection for which diff is saved
 collectionId : Mongo Id of the collection being modified
 diff: diff object
 user: User who modified
@@ -49,7 +48,7 @@ Use as you would any Mongoose plugin:
 var mongoose = require('mongoose'),
     diffHistory = require('mongoose-diff-history/diffHistory'),
     schema = new mongoose.Schema({ ... });
-    schema.plugin(diffHistory.plugin);
+    schema.plugin(diffHistory.plugin, { name: 'SchemaHistory' });
 ```
 
 The plugin also has an omit option which accepts either a string or array. This will omit the given
@@ -59,7 +58,7 @@ keys from history. Follows dot syntax for deeply nested values.
 const mongoose = require('mongoose');
 const diffHistory = require('mongoose-diff-history/diffHistory');
 
-const schema = new mongoose.Schema({
+const Schema = new mongoose.Schema({
     someField: String,
     ignoredField: String,
     some: {
@@ -67,7 +66,11 @@ const schema = new mongoose.Schema({
     }
 });
 
-schema.plugin(diffHistory.plugin, { omit: ['ignoredField', 'some.deepField'] });
+schema.plugin(diffHistory.plugin, {
+    name: 'MyModelHistory',
+    omit: ['ignoredField', 'some.deepField']
+});
+const mongooseModel = mongoose.model('MyModel', Schema);
 ```
 
 ## Helper Methods
@@ -77,17 +80,16 @@ schema.plugin(diffHistory.plugin, { omit: ['ignoredField', 'some.deepField'] });
 You can get all the histories created for an object using following method:
 
 ```js
-const diffHistory = require('mongoose-diff-history/diffHistory');
 const expandableFields = ['abc', 'def'];
 
-diffHistory.getHistories('modelName', ObjectId, expandableFields, function (
+mongooseModel.getHistories(ObjectId, expandableFields, function (
     err,
     histories
 ) {});
 
 // or, as a promise
-diffHistory
-    .getHistories('modelName', ObjectId, expandableFields)
+mongooseModel
+    .getHistories(ObjectId, expandableFields)
     .then(histories => {})
     .catch(console.error);
 ```
@@ -95,19 +97,17 @@ diffHistory
 If you just want the raw histories return with json diff patches:
 
 ```js
-const diffHistory = require('mongoose-diff-history/diffHistory');
-
-diffHistory.getDiffs('modelName', ObjectId, function (err, histories) {});
+mongooseModel.getDiffs(ObjectId, function (err, histories) {});
 
 // or, as a promise
-diffHistory
-    .getDiffs('modelName', ObjectId)
+mongooseModel
+    .getDiffs(ObjectId)
     .then(histories => {})
     .catch(console.error);
 
 // with optional query parameters:
-diffHistory
-    .getDiffs('modelName', ObjectId, { select: 'diff user' })
+mongooseModel
+    .getDiffs(ObjectId, { select: 'diff user' })
     .then(histories => {})
     .catch(console.error);
 ```
@@ -115,16 +115,11 @@ diffHistory
 You can get an older version of the object using following method:
 
 ```js
-const diffHistory = require('mongoose-diff-history/diffHistory');
-
-diffHistory.getVersion(mongooseModel, ObjectId, version, function (
-    err,
-    oldObject
-) {});
+mongooseModel.getVersion(ObjectId, version, function (err, oldObject) {});
 
 // or, as a promise
-diffHistory
-    .getVersion(mongooseModel, ObjectId, version)
+mongooseModel
+    .getVersion(ObjectId, version)
     .then(oldObject => {})
     .catch(console.error);
 ```
@@ -132,19 +127,26 @@ diffHistory
 You can also use Mongoose query options with getVersion like so:
 
 ```js
-const diffHistory = require('mongoose-diff-history/diffHistory');
-
-diffHistory.getVersion(
-    mongooseModel,
-    ObjectId,
-    version,
-    { lean: true },
-    function (err, oldObject) {}
-);
+mongooseModel.getVersion(ObjectId, version, { lean: true }, function (
+    err,
+    oldObject
+) {});
 
 // or, as a promise
-diffHistory
-    .getVersion(mongooseModel, ObjectId, version, { lean: true })
+mongooseModel
+    .getVersion(ObjectId, version, { lean: true })
+    .then(oldObject => {})
+    .catch(console.error);
+```
+
+You can access the model's history-model by calling: `mongooseModel.history.find({}, function (err, histories) {`
+
+From there you can call custom mongoose queries on the history model
+
+```js
+mongooseModel.history
+    .find({ diff: { name: 'foo' } })
+    .limit(10)
     .then(oldObject => {})
     .catch(console.error);
 ```
