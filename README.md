@@ -45,10 +45,10 @@ _v: version
 Use as you would any Mongoose plugin:
 
 ```js
-var mongoose = require('mongoose'),
-    diffHistory = require('mongoose-diff-history/diffHistory'),
-    schema = new mongoose.Schema({ ... });
-    schema.plugin(diffHistory.plugin, { name: 'SchemaHistory' });
+const mongoose = require('mongoose'),
+      diffHistory = require('mongoose-diff-history/diffHistory'),
+      schema = new mongoose.Schema({ ... });
+      schema.plugin(diffHistory.plugin, { name: 'SchemaHistory' });
 ```
 
 The plugin also has an omit option which accepts either a string or array. This will omit the given
@@ -139,9 +139,11 @@ mongooseModel
     .catch(console.error);
 ```
 
-You can access the model's history-model by calling: `mongooseModel.history.find({}, function (err, histories) {`
+## Access History Model
 
-From there you can call custom mongoose queries on the history model
+You can access the model's history-model by calling: `mongooseModel.history` on your attached model
+
+From there you can call custom mongoose queries on the history model:
 
 ```js
 mongooseModel.history
