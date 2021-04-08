@@ -1,6 +1,6 @@
 {
     "name": "mongoose-diff-history",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "description": "Manage Mongo Collection diff History and versions",
     "main": "diffHistoryModel.js",
     "directories": {
@@ -31,12 +31,13 @@
         "istanbul": "^0.4.5",
         "mocha": "^2.5.3",
         "mongoose": "^4.13.9",
+        "nyc": "^15.1.0",
         "prettier": "^2.0.5",
         "pretty-quick": "^2.0.1",
         "standard-version": "^7.1.0"
     },
     "scripts": {
-        "test": "istanbul cover --report lcov  _mocha tests --recursive",
+        "test": "nyc --reporter=lcov _mocha tests && nyc report --reporter=lcov",
         "release": "standard-version"
     },
     "contributors": [
@@ -51,6 +52,10 @@
         {
             "name": "Zachary Rollyson",
             "email": "me@zjr.io"
+        },
+        {
+            "name": "Brandon Sovran",
+            "email": "brandon.sovran@gmail.com"
         }
     ],
     "engines": {

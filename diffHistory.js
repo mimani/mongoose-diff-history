@@ -13,7 +13,7 @@ const historyModelGenerator = require('./diffHistoryModel');
 
 class DiffHistory {
     constructor(schema, opts = {}) {
-        this.model = historyModelGenerator(schema, opts).model;
+        this.model = historyModelGenerator(schema, opts);
     }
 
     isValidCb = cb => {
@@ -173,14 +173,14 @@ class DiffHistory {
             });
     };
 
-    getDiffs = (id, opts, cb) => {
+    getDiffs = (modelName, id, opts, cb) => {
         opts = opts || {};
         if (typeof opts === 'function') {
             cb = opts;
             opts = {};
         }
         return this.model
-            .find({ collectionId: id }, null, opts)
+            .find({ collectionName: modelName, collectionId: id }, null, opts)
             .lean()
             .then(histories => {
                 if (this.isValidCb(cb)) return cb(null, histories);
@@ -192,7 +192,7 @@ class DiffHistory {
             });
     };
 
-    getHistories = (id, expandableFields, cb) => {
+    getHistories = (modelName, id, expandableFields, cb) => {
         expandableFields = expandableFields || [];
         if (typeof expandableFields === 'function') {
             cb = expandableFields;
@@ -202,7 +202,7 @@ class DiffHistory {
         const histories = [];
 
         return this.model
-            .find({ collectionId: id })
+            .find({ collectionName: modelName, collectionId: id })
             .lean()
             .cursor()
             .eachAsync(history => {
@@ -249,12 +249,10 @@ class DiffHistory {
  * @param {string} [opts.name] - Name of history model created for the attached schema (ex. fooHistory)
  * @param {string} [opts.uri] - URI for MongoDB (necessary, for instance, when not using mongoose.connect).
  * @param {string|string[]} [opts.omit] - fields to omit from diffs (ex. ['a', 'b.c.d']).
+ * @param {Object} [opts.schemaOpts] - Options passed to the mongoose history schema
  */
 plugin = (schema, opts = {}) => {
-    if (!opts.name)
-        throw new Error(
-            'Name is a required field! Define in opts by: { name: "your-history-model-name" } '
-        );
+    if (!opts.name) opts.name = 'histories';
 
     if (opts.uri) {
         const mongoVersion = parseInt(mongoose.version);
@@ -284,10 +282,10 @@ plugin = (schema, opts = {}) => {
         return History.getVersion(this, id, version, queryOps, cb);
     };
     schema.statics.getDiffs = function (id, opts, cb) {
-        return History.getDiffs(id, opts, cb);
+        return History.getDiffs(this.modelName, id, opts, cb);
     };
     schema.statics.getHistories = function (id, expandableFields, cb) {
-        return History.getHistories(id, expandableFields, cb);
+        return History.getHistories(this.modelName, id, expandableFields, cb);
     };
     schema.statics.history = History.model;
 
@@ -347,6 +345,30 @@ plugin = (schema, opts = {}) => {
     });
 };
 
+// TODO: Remove this in future version. @deprecated since v3
+const _history = new DiffHistory({}, { name: 'histories' });
+/**
+ * @deprecated Since version 3.0.0. Use mongooseModel.getVersion instead.
+ */
+const getVersion = function (model, id, version, queryOps, cb) {
+    return _history.getVersion(model, id, version, queryOps, cb);
+};
+/**
+ * @deprecated Since version 3.0.0. Use mongooseModel.getDiffs instead.
+ */
+const getDiffs = function (modelName, id, opts, cb) {
+    return _history.getDiffs(modelName, id, opts, cb);
+};
+/**
+ * @deprecated Since version 3.0.0. Use mongooseModel.getHistories instead.
+ */
+const getHistories = function (modelName, id, expandableFields, cb) {
+    return _history.getHistories(modelName, id, expandableFields, cb);
+};
+
 module.exports = {
-    plugin
+    plugin,
+    getVersion,
+    getDiffs,
+    getHistories
 };
