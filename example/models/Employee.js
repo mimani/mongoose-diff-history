@@ -1,22 +1,16 @@
-var mongoose = require("mongoose");
-var config = require("../config");
+const mongoose = require('mongoose');
 
-var EmployeeSchema = new mongoose.Schema({
-    name: {type: String},
-    dateOfBirth: {type: Date},
-    email: {type: String},
-    mobile: {type: String},
-    designation: {type: String},
-    employeeId: {type: String},
+const EmployeeSchema = new mongoose.Schema({
+    name: { type: String },
+    dateOfBirth: { type: Date },
+    email: { type: String },
+    mobile: { type: String },
+    designation: { type: String },
+    employeeId: { type: String }
 });
 
-var diffHistory = require("mongoose-diff-history/diffHistory").plugin;
-EmployeeSchema.plugin(diffHistory);
+const diffHistory = require('mongoose-diff-history/diffHistory').plugin;
+EmployeeSchema.plugin(diffHistory, { name: 'EmployeeHistory' });
 
-var Employee = mongoose.model("Employee", EmployeeSchema);
+const Employee = mongoose.model('Employee', EmployeeSchema);
 module.exports = Employee;
-
-
-
-
-

@@ -1,6 +1,6 @@
 {
     "name": "mongoose-diff-history",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "description": "Manage Mongo Collection diff History and versions",
     "main": "diffHistoryModel.js",
     "directories": {
@@ -20,7 +20,7 @@
         "deep-empty-object": "^1.0.5",
         "jsondiffpatch": "^0.1.38",
         "lodash.pick": "^4.4.0",
-        "omit-deep": "git://github.com/izigibran/omit-deep.git#0.4.0",
+        "omit-deep-remove": "^1.0.0",
         "power-assign": "^0.2.10"
     },
     "devDependencies": {
@@ -31,12 +31,13 @@
         "istanbul": "^0.4.5",
         "mocha": "^2.5.3",
         "mongoose": "^4.13.9",
+        "nyc": "^15.1.0",
         "prettier": "^2.0.5",
         "pretty-quick": "^2.0.1",
         "standard-version": "^7.1.0"
     },
     "scripts": {
-        "test": "istanbul cover --report lcov  _mocha tests --recursive",
+        "test": "nyc --reporter=lcov _mocha tests && nyc report --reporter=lcov",
         "release": "standard-version"
     },
     "contributors": [
@@ -51,10 +52,14 @@
         {
             "name": "Zachary Rollyson",
             "email": "me@zjr.io"
+        },
+        {
+            "name": "Brandon Sovran",
+            "email": "brandon.sovran@gmail.com"
         }
     ],
     "engines": {
-        "node": "*"
+        "node": ">=14.0.0"
     },
     "keywords": [
         "mongoose",
@@ -67,5 +72,5 @@
     "bugs": {
         "url": "https://github.com/mimani/mongoose-diff-history/issues"
     },
-    "license": "GPL-2.0"
+    "license": "Apache-2.0"
 }
