@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const omit = require('omit-deep');
+const omit = require('omit-deep-remove');
 const pick = require('lodash.pick');
 const empty = require('deep-empty-object');
 const { assign } = require('power-assign');
