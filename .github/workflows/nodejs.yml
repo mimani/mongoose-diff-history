@@ -15,13 +15,11 @@ jobs:
 
         strategy:
             matrix:
-                node-version: [12.x, 14.x]
-                mongodb-version: [4.0, 4.2]
+                node-version: [14.x]
+                mongodb-version: [4.0, 4.2, 4.4]
 
         steps:
             - uses: actions/checkout@v2
-              with:
-                persist-credentials: false
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v1
               with:

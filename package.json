@@ -59,7 +59,7 @@
         }
     ],
     "engines": {
-        "node": ">=12.0.0"
+        "node": ">=14.0.0"
     },
     "keywords": [
         "mongoose",
@@ -72,5 +72,5 @@
     "bugs": {
         "url": "https://github.com/mimani/mongoose-diff-history/issues"
     },
-    "license": "GPL-2.0"
+    "license": "Apache-2.0"
 }
