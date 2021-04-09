@@ -154,6 +154,7 @@ describe('diffHistory', function () {
             mongoose.connection.collections['history3'].remove({}),
             mongoose.connection.collections['history4'].remove({}),
             mongoose.connection.collections['history5'].remove({}),
+            mongoose.connection.collections['history6'].remove({}),
             mongoose.connection.collections['mandatories'].remove({}),
             mongoose.connection.collections['timestamps'].remove({}),
             mongoose.connection.collections['strictdisables'].remove({}),
@@ -172,6 +173,7 @@ describe('diffHistory', function () {
             mongoose.connection.collections['history3'].remove({}),
             mongoose.connection.collections['history4'].remove({}),
             mongoose.connection.collections['history5'].remove({}),
+            mongoose.connection.collections['history6'].remove({}),
             mongoose.connection.collections['mandatories'].remove({}),
             mongoose.connection.collections['timestamps'].remove({}),
             mongoose.connection.collections['strictdisables'].remove({}),
@@ -710,7 +712,7 @@ describe('diffHistory', function () {
                         {},
                         function (err, histories) {
                             expect(err).to.null;
-                            expect(histories[1].diff.unknownKey[0]).to.equal(
+                            expect(histories[0].diff.unknownKey[0]).to.equal(
                                 'big'
                             );
                             done();
