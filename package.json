@@ -29,7 +29,7 @@
         "commitlint": "^8.3.5",
         "husky": "^4.2.5",
         "istanbul": "^0.4.5",
-        "mocha": "^2.5.3",
+        "mocha": "^10.2.0",
         "mongoose": "^4.13.9",
         "prettier": "^2.0.5",
         "pretty-quick": "^2.0.1",
