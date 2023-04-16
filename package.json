@@ -26,14 +26,14 @@
     "devDependencies": {
         "bluebird": "^3.5.1",
         "chai": "^3.5.0",
-        "commitlint": "^8.3.5",
+        "commitlint": "^17.6.1",
         "husky": "^4.2.5",
         "istanbul": "^0.4.5",
         "mocha": "^2.5.3",
         "mongoose": "^4.13.9",
         "prettier": "^2.0.5",
         "pretty-quick": "^2.0.1",
-        "standard-version": "^7.1.0"
+        "standard-version": "^9.5.0"
     },
     "scripts": {
         "test": "istanbul cover --report lcov  _mocha tests --recursive",
